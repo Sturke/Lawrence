@@ -1,24 +1,19 @@
 class Brain:
-    def __init__(self, config):
+    def __init__(self, config, conversation):
         self.identity = config["identity"]
-        self.conversation = []
+        self.conversation = conversation
 
     def respond(self, message):
-        self.conversation.append({
-            "role": "user",
-            "content": message
-        })
+        self.conversation.add_user_message(message)
 
         response = self.generate_response()
 
-        self.conversation.append({
-            "role": "butler",
-            "content": response
-        })
+        self.conversation.add_butler_message(response)
+
         return response
 
     def generate_response(self):
-        last_message = self.conversation[-1]["content"]
+        last_message = self.conversation.get_messages()[-1]["content"]
 
         if "hello" in last_message.lower():
             return "Hello. I'm Butler."
@@ -27,13 +22,15 @@ class Brain:
             return "It's nice to meet you."
 
         if "what did i just tell you" in last_message.lower():
+            messages = self.conversation.get_messages()
+
             previous_messages = [
                 message["content"]
-                for message in self.conversation[:-1]
+                for message in messages[:-1]
                 if message["role"] == "user"
             ]
 
             if previous_messages:
                 return f"You previously told me: {previous_messages[-1]}"
 
-        return "I've got this."
+        return "I hear you."

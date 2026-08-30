@@ -1,6 +1,8 @@
-from brain import Brain
 import json
 from pathlib import Path
+
+from brain import Brain
+from conversation import Conversation
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -14,7 +16,8 @@ def load_config():
 
 def main():
     config = load_config()
-    brain = Brain(config)
+    conversation = Conversation()
+    brain = Brain(config, conversation)
     print(f"{config['name']} is starting...")
     print(f"Version: {config['version']}")
     print(f"Mode: {config['mode']}")
