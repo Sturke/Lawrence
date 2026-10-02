@@ -1,7 +1,8 @@
 class Brain:
-    def __init__(self, config, conversation):
+    def __init__(self, config, conversation, memory=None):
         self.identity = config["identity"]
         self.conversation = conversation
+        self.memory = memory
 
     def respond(self, message):
         self.conversation.add_user_message(message)
@@ -14,6 +15,17 @@ class Brain:
 
     def generate_response(self):
         last_message = self.conversation.get_messages()[-1]["content"]
+
+        if "what do you remember about me" in last_message.lower():
+            if self.memory is None:
+                return "I don't have access to personal memory."
+
+            memories = self.memory.get_memories()
+
+            if memories:
+                return " ".join(memory["content"] for memory in memories)
+
+            return "I don't have any personal memories stored."
 
         if "hello" in last_message.lower():
             return "Hello. I'm Butler."
@@ -33,4 +45,4 @@ class Brain:
             if previous_messages:
                 return f"You previously told me: {previous_messages[-1]}"
 
-        return "I hear you."
+        return "I hear you."    
