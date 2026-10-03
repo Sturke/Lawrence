@@ -51,6 +51,14 @@ class Brain:
 
             return "I don't have that information stored."
 
+        if self.memory is not None:
+            memories = self.memory.find_relevant_memories(
+                query=last_message
+            )
+
+            if memories:
+                return memories[0]["content"]
+
 
         if "hello" in last_message.lower():
             return "Hello. I'm Butler."

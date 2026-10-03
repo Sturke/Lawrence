@@ -41,3 +41,17 @@ def test_memory_can_be_searched(tmp_path):
 
     assert len(memories) == 1
     assert memories[0]["content"] == "My favorite college is UIUC."
+
+def test_memory_can_find_relevant_memories(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+    store.save_memory(content="My favorite college is UIUC.")
+    store.save_memory(content="My favorite coffee is Sumatra.")
+
+    memories = store.find_relevant_memories(
+        query="What coffee do I like?"
+    )
+
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite coffee is Sumatra."

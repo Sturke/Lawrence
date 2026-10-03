@@ -61,3 +61,34 @@ class PersonalMemoryStore:
             for memory in self.get_memories()
             if query in memory["content"].lower()
         ]
+
+    def find_relevant_memories(self, *, query):
+        """Return memories ranked by the number of words shared with the query."""
+        query_words = {
+            word.strip(".,?!").lower()
+            for word in query.split()
+            if len(word.strip(".,?!")) > 3
+        }
+
+        scored_memories = []
+
+        for memory in self.get_memories():
+            memory_words = {
+                word.strip(".,?!").lower()
+                for word in memory["content"].split()
+            }
+
+            score = len(query_words & memory_words)
+
+            if score > 0:
+                scored_memories.append((score, memory))
+
+        scored_memories.sort(
+            key=lambda item: item[0],
+            reverse=True,
+        )
+
+        return [
+            memory
+            for score, memory in scored_memories
+        ]

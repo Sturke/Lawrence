@@ -100,3 +100,55 @@ def test_brain_can_recall_a_specific_personal_memory(tmp_path):
 
     assert "UIUC" in response
     assert "Sumatra" not in response
+
+def test_brain_can_recall_memory_from_a_natural_question(tmp_path):
+    config = {
+        "identity": {
+            "role": "personal AI assistant",
+            "description": "A trusted gatekeeper.",
+            "principles": [
+                "Be helpful",
+                "Protect the user's interests"
+            ]
+        }
+    }
+
+    database = tmp_path / "personal.sqlite3"
+    memory = PersonalMemoryStore(database)
+
+    memory.save_memory(content="My favorite college is UIUC.")
+    memory.save_memory(content="My favorite coffee is Sumatra.")
+
+    conversation = Conversation()
+    brain = Brain(config, conversation, memory)
+
+    response = brain.respond("What coffee do I like?")
+
+    assert "Sumatra" in response
+    assert "UIUC" not in response
+
+def test_brain_prefers_the_most_relevant_personal_memory(tmp_path):
+    config = {
+        "identity": {
+            "role": "personal AI assistant",
+            "description": "A trusted gatekeeper.",
+            "principles": [
+                "Be helpful",
+                "Protect the user's interests"
+            ]
+        }
+    }
+
+    database = tmp_path / "personal.sqlite3"
+    memory = PersonalMemoryStore(database)
+
+    memory.save_memory(content="My favorite college is UIUC.")
+    memory.save_memory(content="My favorite coffee is Sumatra.")
+
+    conversation = Conversation()
+    brain = Brain(config, conversation, memory)
+
+    response = brain.respond("What is my favorite coffee?")
+
+    assert "Sumatra" in response
+    assert "UIUC" not in response
