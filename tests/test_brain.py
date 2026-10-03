@@ -209,3 +209,39 @@ def test_brain_stores_favorite_as_structured_memory(tmp_path):
     assert memories[0]["category"] == "preference"
     assert memories[0]["subject"] == "coffee"
     assert memories[0]["value"] == "Sumatra"
+
+def test_brain_updates_existing_structured_preference(tmp_path):
+    config = {
+        "identity": {
+            "role": "personal AI assistant",
+            "description": "A trusted gatekeeper.",
+            "principles": [
+                "Be helpful",
+                "Protect the user's interests"
+            ]
+        }
+    }
+
+    database = tmp_path / "personal.sqlite3"
+    memory = PersonalMemoryStore(database)
+
+    conversation = Conversation()
+    brain = Brain(config, conversation, memory)
+
+    brain.respond(
+        "remember: My favorite coffee is Sumatra."
+    )
+
+    brain.respond(
+        "remember: My favorite coffee is Ethiopian Yirgacheffe."
+    )
+
+    memories = memory.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["category"] == "preference"
+    assert memories[0]["subject"] == "coffee"
+    assert memories[0]["value"] == "Ethiopian Yirgacheffe"
+    assert memories[0]["content"] == (
+        "My favorite coffee is Ethiopian Yirgacheffe."
+    )

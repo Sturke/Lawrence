@@ -53,35 +53,108 @@ class PersonalMemoryStore:
         category=None,
         subject=None,
         value=None,
+        created_at=None,
     ):
-        """Save an explicitly approved personal memory and return its local ID."""
+        """Save or update an explicitly approved personal memory."""
 
-        created_at = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).isoformat()
+
+        if created_at is None:
+            created_at = now
 
         with closing(sqlite3.connect(self.database_path)) as connection:
             with connection:
+                if category is not None and subject is not None:
+                    existing = connection.execute(
+                        """SELECT id
+                           FROM personal_memories
+                           WHERE category = ?
+                             AND subject = ?
+                           ORDER BY id
+                           LIMIT 1""",
+                        (category, subject),
+                    ).fetchone()
+
+                    if existing is not None:
+                        memory_id = existing[0]
+
+                        connection.execute(
+                            """UPDATE personal_memories
+                               SET content = ?,
+                                   value = ?,
+                                   updated_at = ?
+                               WHERE id = ?""",
+                            (
+                                content,
+                                value,
+                                now,
+                                memory_id,
+                            ),
+                        )
+
+                        return memory_id
+
                 cursor = connection.execute(
                     """INSERT INTO personal_memories
+                       (
+                           content,
+                           category,
+                           subject,
+                           value,
+                           created_at,
+                           updated_at
+                       )
+                       VALUES (?, ?, ?, ?, ?, ?)""",
                     (
                         content,
                         category,
                         subject,
                         value,
                         created_at,
-                        updated_at
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?)""",
-                    (
-                        content,
-                        category,
-                        subject,
-                        value,
-                        created_at,
-                        created_at,
+                        now,
                     ),
                 )
+
                 return cursor.lastrowid
-            
+
+    def migrate_legacy_favorites(self):
+        """Convert legacy favorite memories to structured memories."""
+
+        memories = self.get_memories()
+
+        legacy_memories = [
+            memory
+            for memory in memories
+            if memory["category"] is None
+            and memory["content"].lower().startswith("my favorite ")
+            and " is " in memory["content"].lower()
+        ]
+
+        for memory in legacy_memories:
+            content = memory["content"]
+            subject_and_value = content[len("My favorite "):]
+            subject, value = subject_and_value.split(" is ", 1)
+
+            subject = subject.strip()
+            value = value.rstrip(".").strip()
+
+            with closing(sqlite3.connect(self.database_path)) as connection:
+                with connection:
+                    connection.execute(
+                        "DELETE FROM personal_memories WHERE id = ?",
+                        (memory["id"],),
+                    )
+
+            self.save_memory(
+                content=content,
+                category="preference",
+                subject=subject,
+                value=value,
+                created_at=memory["created_at"],
+            )
+
+        return len(legacy_memories)
+
     def get_memories(self):
         """Return all personal memories in the order they were stored."""
         with closing(sqlite3.connect(self.database_path)) as connection:
