@@ -51,3 +51,13 @@ class PersonalMemoryStore:
             ).fetchall()
 
             return [dict(row) for row in rows]
+
+    def search_memories(self, *, query):
+        """Return personal memories containing the query text."""
+        query = query.lower()
+
+        return [
+            memory
+            for memory in self.get_memories()
+            if query in memory["content"].lower()
+        ]

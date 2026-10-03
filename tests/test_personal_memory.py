@@ -34,3 +34,15 @@ def test_memory_can_be_retrieved_after_reopening(tmp_path):
     memories = reopened.get_memories()
 
     assert memories[0]["content"] == "My favorite college is UIUC."
+
+def test_memory_can_be_searched(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+    store.save_memory(content="My favorite college is UIUC.")
+    store.save_memory(content="My favorite coffee is Sumatra.")
+
+    memories = store.search_memories(query="college")
+
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite college is UIUC."
