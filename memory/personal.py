@@ -37,6 +37,9 @@ class PersonalMemoryStore:
                     "subject": "TEXT",
                     "value": "TEXT",
                     "updated_at": "TEXT",
+                    "source_type": "TEXT",
+                    "confidence": "TEXT",
+                    "status": "TEXT",
                 }
 
                 for column, column_type in structured_columns.items():
@@ -45,6 +48,12 @@ class PersonalMemoryStore:
                             f"ALTER TABLE personal_memories "
                             f"ADD COLUMN {column} {column_type}"
                         )
+                connection.execute(
+                    """UPDATE personal_memories
+                    SET status = ?
+                    WHERE status IS NULL""",
+                    ("active",),
+                )
 
     def save_memory(
         self,
@@ -54,6 +63,9 @@ class PersonalMemoryStore:
         subject=None,
         value=None,
         created_at=None,
+        source_type="direct_user_statement",
+        confidence="high",
+        status="active"
     ):
         """Save or update an explicitly approved personal memory."""
 
@@ -80,14 +92,20 @@ class PersonalMemoryStore:
 
                         connection.execute(
                             """UPDATE personal_memories
-                               SET content = ?,
-                                   value = ?,
-                                   updated_at = ?
-                               WHERE id = ?""",
+                            SET content = ?,
+                                value = ?,
+                                updated_at = ?,
+                                source_type = ?,
+                                confidence = ?,
+                                status = ?
+                            WHERE id = ?""",
                             (
                                 content,
                                 value,
                                 now,
+                                source_type,
+                                confidence,
+                                status,
                                 memory_id,
                             ),
                         )
@@ -102,9 +120,12 @@ class PersonalMemoryStore:
                            subject,
                            value,
                            created_at,
-                           updated_at
+                           updated_at,
+                           source_type,
+                           confidence,
+                           status
                        )
-                       VALUES (?, ?, ?, ?, ?, ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         content,
                         category,
@@ -112,6 +133,9 @@ class PersonalMemoryStore:
                         value,
                         created_at,
                         now,
+                        source_type,
+                        confidence,
+                        status
                     ),
                 )
 
@@ -151,6 +175,9 @@ class PersonalMemoryStore:
                 subject=subject,
                 value=value,
                 created_at=memory["created_at"],
+                source_type=memory.get("source_type"),
+                confidence=memory.get("confidence"),
+                status=memory.get("status") or "active",
             )
 
         return len(legacy_memories)
@@ -161,7 +188,7 @@ class PersonalMemoryStore:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
                 """SELECT id, content, category, subject, value,
-                    created_at, updated_at
+                    created_at, updated_at, source_type, confidence, status
                     FROM personal_memories
                     ORDER BY id"""
             ).fetchall()

@@ -208,3 +208,154 @@ def test_legacy_migration_preserves_created_at(tmp_path):
     migrated_memory = store.get_memories()[0]
 
     assert migrated_memory["created_at"] == original_created_at
+
+def test_new_memory_has_default_provenance(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="My favorite coffee is Sumatra.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["source_type"] == "direct_user_statement"
+    assert memories[0]["confidence"] == "high"
+    assert memories[0]["status"] == "active"
+
+def test_memory_can_store_explicit_provenance(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="Burke may prefer dark roast coffee.",
+        category="preference",
+        subject="coffee",
+        value="dark roast",
+        source_type="inference",
+        confidence="low",
+        status="active",
+    )
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["source_type"] == "inference"
+    assert memories[0]["confidence"] == "low"
+    assert memories[0]["status"] == "active"
+
+def test_updating_memory_updates_provenance(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+
+    memory_id = store.save_memory(
+        content="My favorite coffee is Sumatra.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+        source_type="inference",
+        confidence="low",
+        status="active",
+    )
+
+    updated_memory_id = store.save_memory(
+        content="My favorite coffee is Ethiopian Yirgacheffe.",
+        category="preference",
+        subject="coffee",
+        value="Ethiopian Yirgacheffe",
+        source_type="direct_user_statement",
+        confidence="high",
+        status="active",
+    )
+
+    memories = store.get_memories()
+
+    assert updated_memory_id == memory_id
+    assert len(memories) == 1
+    assert memories[0]["value"] == "Ethiopian Yirgacheffe"
+    assert memories[0]["source_type"] == "direct_user_statement"
+    assert memories[0]["confidence"] == "high"
+    assert memories[0]["status"] == "active"
+
+def test_existing_memory_gets_active_status_during_schema_migration(tmp_path):
+    import sqlite3
+
+    database = tmp_path / "personal.sqlite3"
+
+    connection = sqlite3.connect(database)
+
+    connection.execute("""
+        CREATE TABLE personal_memories (
+            id INTEGER PRIMARY KEY,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            category TEXT,
+            subject TEXT,
+            value TEXT,
+            updated_at TEXT
+        )
+    """)
+
+    connection.execute(
+        """INSERT INTO personal_memories
+           (
+               content,
+               created_at,
+               category,
+               subject,
+               value,
+               updated_at
+           )
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            "My favorite coffee is Sumatra.",
+            "2026-10-03T16:45:50+00:00",
+            "preference",
+            "coffee",
+            "Sumatra",
+            "2026-10-03T20:15:32+00:00",
+        ),
+    )
+
+    connection.commit()
+    connection.close()
+
+    store = PersonalMemoryStore(database)
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite coffee is Sumatra."
+    assert memories[0]["source_type"] is None
+    assert memories[0]["confidence"] is None
+    assert memories[0]["status"] == "active"
+
+def test_legacy_favorite_migration_preserves_unknown_provenance(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="My favorite tea is Earl Grey.",
+        source_type=None,
+        confidence=None,
+        status="active",
+    )
+
+    store.migrate_legacy_favorites()
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["category"] == "preference"
+    assert memories[0]["subject"] == "tea"
+    assert memories[0]["value"] == "Earl Grey"
+    assert memories[0]["source_type"] is None
+    assert memories[0]["confidence"] is None
+    assert memories[0]["status"] == "active"
