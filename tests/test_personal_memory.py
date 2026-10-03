@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "memory"))
-
-from personal import PersonalMemoryStore
+from memory.personal import PersonalMemoryStore
 
 
 def test_memory_survives_reopening(tmp_path):

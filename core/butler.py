@@ -1,16 +1,11 @@
 import json
 from pathlib import Path
-import sys
 
-from brain import Brain
-from conversation import Conversation
-
+from core.brain import Brain
+from core.conversation import Conversation
+from memory.personal import PersonalMemoryStore
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT / "memory"))
-
-
-from personal import PersonalMemoryStore
 
 CONFIG_FILE = PROJECT_ROOT / "config" / "butler.json"
 PERSONAL_MEMORY_FILE = PROJECT_ROOT / "data" / "personal.sqlite3"

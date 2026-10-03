@@ -1,14 +1,6 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "core"))
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "memory"))
-
-from personal import PersonalMemoryStore
-
-from brain import Brain
-from conversation import Conversation
+from memory.personal import PersonalMemoryStore
+from core.brain import Brain
+from core.conversation import Conversation
 
 
 def test_brain_remembers_conversation():
