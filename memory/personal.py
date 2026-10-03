@@ -25,9 +25,36 @@ class PersonalMemoryStore:
                     )
                 """)
 
-    def save_memory(self, *, content):
+                existing_columns = {
+                    row[1]
+                    for row in connection.execute(
+                        "PRAGMA table_info(personal_memories)"
+                    )
+                }
+
+                structured_columns = {
+                    "category": "TEXT",
+                    "subject": "TEXT",
+                    "value": "TEXT",
+                    "updated_at": "TEXT",
+                }
+
+                for column, column_type in structured_columns.items():
+                    if column not in existing_columns:
+                        connection.execute(
+                            f"ALTER TABLE personal_memories "
+                            f"ADD COLUMN {column} {column_type}"
+                        )
+
+    def save_memory(
+        self,
+        *,
+        content,
+        category=None,
+        subject=None,
+        value=None,
+    ):
         """Save an explicitly approved personal memory and return its local ID."""
-        
 
         created_at = datetime.now(timezone.utc).isoformat()
 
@@ -35,8 +62,23 @@ class PersonalMemoryStore:
             with connection:
                 cursor = connection.execute(
                     """INSERT INTO personal_memories
-                       (content, created_at) VALUES (?, ?)""",
-                    (content, created_at),
+                    (
+                        content,
+                        category,
+                        subject,
+                        value,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)""",
+                    (
+                        content,
+                        category,
+                        subject,
+                        value,
+                        created_at,
+                        created_at,
+                    ),
                 )
                 return cursor.lastrowid
             
@@ -45,9 +87,10 @@ class PersonalMemoryStore:
         with closing(sqlite3.connect(self.database_path)) as connection:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
-                """SELECT id, content, created_at
-                   FROM personal_memories
-                   ORDER BY id"""
+                """SELECT id, content, category, subject, value,
+                    created_at, updated_at
+                    FROM personal_memories
+                    ORDER BY id"""
             ).fetchall()
 
             return [dict(row) for row in rows]

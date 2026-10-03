@@ -25,7 +25,23 @@ class Brain:
             if not content:
                 return "There is nothing to remember."
 
-            self.memory.save_memory(content=content)
+            lower_content = content.lower()
+
+            if lower_content.startswith("my favorite ") and " is " in lower_content:
+                subject_and_value = content[len("My favorite "):]
+                subject, value = subject_and_value.split(" is ", 1)
+
+                value = value.rstrip(".")
+
+                self.memory.save_memory(
+                    content=content,
+                    category="preference",
+                    subject=subject.strip(),
+                    value=value.strip(),
+                )
+            else:
+                self.memory.save_memory(content=content)
+
             return f"Remembered: {content}"
         
         if "what do you remember about me" in last_message.lower():

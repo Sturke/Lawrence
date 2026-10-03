@@ -178,3 +178,34 @@ def test_brain_recalls_college_without_specific_question_rule(tmp_path):
 
     assert "UIUC" in response
     assert "Sumatra" not in response
+
+def test_brain_stores_favorite_as_structured_memory(tmp_path):
+    config = {
+        "identity": {
+            "role": "personal AI assistant",
+            "description": "A trusted gatekeeper.",
+            "principles": [
+                "Be helpful",
+                "Protect the user's interests"
+            ]
+        }
+    }
+
+    database = tmp_path / "personal.sqlite3"
+    memory = PersonalMemoryStore(database)
+
+    conversation = Conversation()
+    brain = Brain(config, conversation, memory)
+
+    response = brain.respond(
+        "remember: My favorite coffee is Sumatra."
+    )
+
+    memories = memory.get_memories()
+
+    assert response == "Remembered: My favorite coffee is Sumatra."
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite coffee is Sumatra."
+    assert memories[0]["category"] == "preference"
+    assert memories[0]["subject"] == "coffee"
+    assert memories[0]["value"] == "Sumatra"

@@ -55,3 +55,58 @@ def test_memory_can_find_relevant_memories(tmp_path):
 
     assert len(memories) == 1
     assert memories[0]["content"] == "My favorite coffee is Sumatra."
+
+def test_existing_database_is_upgraded_for_structured_memory(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    import sqlite3
+
+    connection = sqlite3.connect(database)
+    connection.execute("""
+        CREATE TABLE personal_memories (
+            id INTEGER PRIMARY KEY,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+    connection.execute(
+        """INSERT INTO personal_memories
+           (content, created_at)
+           VALUES (?, ?)""",
+        ("My favorite coffee is Sumatra.", "2026-01-01T00:00:00+00:00"),
+    )
+    connection.commit()
+    connection.close()
+
+    store = PersonalMemoryStore(database)
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite coffee is Sumatra."
+    assert memories[0]["category"] is None
+    assert memories[0]["subject"] is None
+    assert memories[0]["value"] is None
+    assert memories[0]["updated_at"] is None
+
+def test_structured_memory_can_be_saved(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="My favorite coffee is Sumatra.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+    memories = store.get_memories()
+
+    assert len(memories) == 1
+    assert memories[0]["content"] == "My favorite coffee is Sumatra."
+    assert memories[0]["category"] == "preference"
+    assert memories[0]["subject"] == "coffee"
+    assert memories[0]["value"] == "Sumatra"
+    assert memories[0]["created_at"] is not None
+    assert memories[0]["updated_at"] is not None
