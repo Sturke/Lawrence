@@ -39,18 +39,6 @@ class Brain:
 
             return "I don't have any personal memories stored."
 
-
-        if "favorite college" in last_message.lower():
-            if self.memory is None:
-                return "I don't have access to personal memory."
-
-            memories = self.memory.search_memories(query="college")
-
-            if memories:
-                return memories[0]["content"]
-
-            return "I don't have that information stored."
-
         if self.memory is not None:
             memories = self.memory.find_relevant_memories(
                 query=last_message
