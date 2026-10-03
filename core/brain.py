@@ -15,7 +15,19 @@ class Brain:
 
     def generate_response(self):
         last_message = self.conversation.get_messages()[-1]["content"]
+        
+        if last_message.lower().startswith("remember:"):
+            if self.memory is None:
+                return "I don't have access to personal memory."
 
+            content = last_message.split(":", 1)[1].strip()
+
+            if not content:
+                return "There is nothing to remember."
+
+            self.memory.save_memory(content=content)
+            return f"Remembered: {content}"
+        
         if "what do you remember about me" in last_message.lower():
             if self.memory is None:
                 return "I don't have access to personal memory."
