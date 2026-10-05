@@ -4,6 +4,7 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 
+
 class PersonalMemoryStore:
     """Store explicitly approved personal memories in a SQLite file."""
 
@@ -205,33 +206,100 @@ class PersonalMemoryStore:
             if query in memory["content"].lower()
         ]
 
+    def _score_memory_relevance(self, *, memory, query_words):
+        """Return a relevance score for a memory against query words."""
+        content_words = {
+            word.strip(".,?!").lower()
+            for word in memory["content"].split()
+        }
+
+        category_words = {
+            word.strip(".,?!").lower()
+            for word in (memory["category"] or "").split()
+        }
+
+        subject_words = {
+            word.strip(".,?!").lower()
+            for word in (memory["subject"] or "").split()
+        }
+
+        value_words = {
+            word.strip(".,?!").lower()
+            for word in (memory["value"] or "").split()
+        }
+
+        content_matches = len(query_words & content_words)
+        category_matches = len(query_words & category_words)
+        subject_matches = len(query_words & subject_words)
+        value_matches = len(query_words & value_words)
+
+        return (
+            content_matches
+            + category_matches * 2
+            + value_matches * 2
+            + subject_matches * 3
+        )
+
     def find_relevant_memories(self, *, query):
-        """Return memories ranked by the number of words shared with the query."""
+        """Return active memories ranked by relevance to the query."""
         query_words = {
             word.strip(".,?!").lower()
             for word in query.split()
             if len(word.strip(".,?!")) > 3
         }
 
+        source_strength = {
+            "direct_user_statement": 3,
+            "inference": 1,
+        }
+
+        confidence_strength = {
+            "high": 3,
+            "medium": 2,
+            "low": 1,
+        }
         scored_memories = []
 
         for memory in self.get_memories():
-            memory_words = {
-                word.strip(".,?!").lower()
-                for word in memory["content"].split()
-            }
+            if memory["status"] != "active":
+                continue
 
-            score = len(query_words & memory_words)
+            score = self._score_memory_relevance(
+                memory=memory,
+                query_words=query_words,
+            )
 
             if score > 0:
-                scored_memories.append((score, memory))
+                provenance_score = source_strength.get(
+                    memory["source_type"],
+                    0,
+                )
+
+                confidence_score = confidence_strength.get(
+                    memory["confidence"],
+                    0,
+                )
+
+                scored_memories.append(
+                    (
+                        score,
+                        provenance_score,
+                        confidence_score,
+                        memory,
+                    )
+                )
 
         scored_memories.sort(
-            key=lambda item: item[0],
+            key=lambda item: (
+                item[0],
+                item[1],
+                item[2],
+            ),
             reverse=True,
         )
 
         return [
             memory
-            for score, memory in scored_memories
+            for score, provenance_score, confidence_score, memory
+            in scored_memories
         ]

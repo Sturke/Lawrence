@@ -359,3 +359,115 @@ def test_legacy_favorite_migration_preserves_unknown_provenance(tmp_path):
     assert memories[0]["source_type"] is None
     assert memories[0]["confidence"] is None
     assert memories[0]["status"] == "active"
+
+def test_relevant_memory_uses_structured_fields(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="Sumatra is my usual choice.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+    store.save_memory(
+        content="I enjoy working with Python.",
+        category="preference",
+        subject="programming language",
+        value="Python",
+    )
+
+    memories = store.find_relevant_memories(
+        query="What coffee do I like?"
+    )
+
+    assert len(memories) == 1
+    assert memories[0]["subject"] == "coffee"
+    assert memories[0]["value"] == "Sumatra"
+
+def test_relevant_memory_ignores_inactive_memories(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="My favorite coffee used to be Sumatra.",
+        category="former_preference",
+        subject="coffee",
+        value="Sumatra",
+        status="inactive",
+    )
+
+    store.save_memory(
+        content="My favorite college is UIUC.",
+        category="preference",
+        subject="college",
+        value="UIUC",
+        status="active",
+    )
+
+    memories = store.find_relevant_memories(
+        query="What coffee do I like?"
+    )
+
+    assert memories == []
+
+def test_relevant_memory_prefers_stronger_provenance(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+    store = PersonalMemoryStore(database)
+
+    store.save_memory(
+        content="Burke may prefer dark roast coffee.",
+        category="preference",
+        subject="coffee style",
+        value="dark roast",
+        source_type="inference",
+        confidence="low",
+    )
+
+    store.save_memory(
+        content="My favorite coffee is Sumatra.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+        source_type="direct_user_statement",
+        confidence="high",
+    )
+
+    memories = store.find_relevant_memories(
+        query="What coffee do I like?"
+    )
+
+    assert len(memories) == 2
+    assert memories[0]["value"] == "Sumatra"
+    assert memories[0]["source_type"] == "direct_user_statement"
+    assert memories[0]["confidence"] == "high"
+
+def test_relevant_memory_prefers_subject_match_over_content_match(tmp_path):
+    database = tmp_path / "personal.sqlite3"
+    store = PersonalMemoryStore(database)
+
+
+    store.save_memory(
+        content="I bought coffee while shopping for a keyboard.",
+        category="activity",
+        subject="keyboard shopping",
+        value="bought supplies",
+    )
+
+
+    store.save_memory(
+        content="Sumatra is my usual choice.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+
+    memories = store.find_relevant_memories(
+        query="What coffee do I like?"
+    )
+
+    assert len(memories) == 2
+    assert memories[0]["subject"] == "coffee"
+    assert memories[0]["value"] == "Sumatra"
