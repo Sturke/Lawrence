@@ -1,11 +1,3 @@
-
----
-
-### 2. `docs/decisions.md`
-
-Put this in:
-
-```markdown
 # Architectural Decisions
 
 ## Decision 001 — Keep the AI Model Replaceable
@@ -51,3 +43,23 @@ Butler will initially use existing AI capabilities rather than training a founda
 **Reason:**
 
 We need to discover Butler's actual requirements, behavior, architecture, and data needs before considering custom model training.
+
+---
+
+## Decision 004 — Separate Evidence from Verification Results
+
+**Date:** October 4, 2026
+
+**Decision:** Preserve received evidence separately from a claim's evaluation. Provenance describes origin; verification describes the judgment and its evidentiary basis. Future fact-checking and threat/deception detection share this foundation while retaining distinct responsibilities from Gatekeeper, retrieval, and reasoning.
+
+**Reason:** Incoming information must not declare itself true. Evidence & Verification Foundation v0.1 establishes these models without prematurely adding automatic research, detection, or a new database.
+
+---
+
+## Decision 005 — Preserve History and Rank Current Relevant Memories
+
+**Date:** October 4, 2026
+
+**Decision:** Keep inactive memories in storage, exclude them from normal relevant-memory retrieval, and rank active matches by relevance before provenance and confidence. Weight content/category/value/subject matches 1/2/2/3 and isolate relevance scoring in `_score_memory_relevance()`.
+
+**Reason:** Obsolete information should not supply current answers; strong provenance should not elevate irrelevant information. Structured subjects should matter more than incidental mentions. Improved Retrieval v1A is the initial explicit policy; conceptual matching is the next target in v1B.

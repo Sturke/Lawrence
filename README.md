@@ -29,4 +29,16 @@ The underlying AI model should initially be replaceable. Butler's identity, memo
 
 ## Status
 
-Early development.
+Early development. Project Butler is the repository/project name; Lawrence is the personal assistant being developed.
+
+As of October 4, 2026, structured personal memory, Provenance v1A,
+Evidence & Verification Foundation v0.1, and Improved Retrieval v1A are complete.
+The checkpoint is **51 passing tests** at `f4f399c` —
+`Improve structured memory retrieval` (following `05b6778` —
+`Add evidence and verification foundation`).
+
+Next: **Improved Retrieval v1B**, recognizing conceptual relevance beyond literal
+word overlap. See [Roadmap](docs/roadmap.md), [Architecture](docs/architecture.md),
+and [Architectural Decisions](docs/decisions.md).
+
+Run the full suite from the repository root with `.venv/bin/python -m pytest -q`.

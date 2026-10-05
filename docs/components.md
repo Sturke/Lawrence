@@ -4,7 +4,7 @@ Its responsibility is to start Butler.
 
 ##  core/butler.py
 Coordinates the Butler application.
-It loads configuration, creates the Conversation and Brain, and manages the interaction loop.
+It loads configuration, creates the Conversation, PersonalMemoryStore, and Brain, and manages the interaction loop. Personal memory is stored in `data/personal.sqlite3`.
 
 ##  core/brain.py
 Represents Butler's intelligence layer.
@@ -18,9 +18,11 @@ Conversation history is deliberately separated from the Brain so that memory can
 Contains Butler's configuration and identity.
 
 ####   memory/
-Reserved for Butler's persistent memory system.
+Contains SQLite stores for personal memory (`personal.py`) and Gatekeeper messages (`gatekeeper.py`). Personal memory supports explicit `remember:` requests, structured fields, updates, legacy migration, provenance, and ranked retrieval. Gatekeeper storage remains separate from the interaction loop; see [storage](gatekeeper-storage.md) and [saved-email import](gatekeeper-import.md).
 ####    tools/
-Reserved for capabilities Butler will eventually be able to use.
+Contains the local saved-email importer (`gatekeeper_import.py`). Broader tool permissions and execution remain future work.
+####    verification/
+Contains `evidence.py`, the Evidence & Verification Foundation v0.1 models. These models are not yet connected to Brain response generation.
 ####    tests/
 Contains automated tests that protect existing behavior as Butler evolves.
 
