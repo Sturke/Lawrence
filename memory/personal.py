@@ -4,6 +4,10 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
 
+# Explicit retrieval relationships; these do not establish factual equivalence.
+CONCEPT_ALIAS_GROUPS = (
+    frozenset({"college", "university"}),
+)
 
 class PersonalMemoryStore:
     """Store explicitly approved personal memories in a SQLite file."""
@@ -208,9 +212,6 @@ class PersonalMemoryStore:
 
     def _score_memory_relevance(self, *, memory, query_words):
         """Score literal matches and a small set of concept aliases."""
-        concept_groups = (
-            frozenset({"college", "university"}),
-        )
 
         def score_field(text):
             field_words = {
@@ -221,7 +222,7 @@ class PersonalMemoryStore:
             literal_matches = query_words & field_words
             score = len(literal_matches)
 
-            for group in concept_groups:
+            for group in CONCEPT_ALIAS_GROUPS:
                 # Count a concept once; literal matches take priority.
                 if (
                     query_words & group
