@@ -207,37 +207,36 @@ class PersonalMemoryStore:
         ]
 
     def _score_memory_relevance(self, *, memory, query_words):
-        """Return a relevance score for a memory against query words."""
-        content_words = {
-            word.strip(".,?!").lower()
-            for word in memory["content"].split()
-        }
+        """Score literal matches and a small set of concept aliases."""
+        concept_groups = (
+            frozenset({"college", "university"}),
+        )
 
-        category_words = {
-            word.strip(".,?!").lower()
-            for word in (memory["category"] or "").split()
-        }
+        def score_field(text):
+            field_words = {
+                word.strip(".,?!").lower()
+                for word in (text or "").split()
+            }
 
-        subject_words = {
-            word.strip(".,?!").lower()
-            for word in (memory["subject"] or "").split()
-        }
+            literal_matches = query_words & field_words
+            score = len(literal_matches)
 
-        value_words = {
-            word.strip(".,?!").lower()
-            for word in (memory["value"] or "").split()
-        }
+            for group in concept_groups:
+                # Count a concept once; literal matches take priority.
+                if (
+                    query_words & group
+                    and field_words & group
+                    and not literal_matches & group
+                ):
+                    score += 0.5
 
-        content_matches = len(query_words & content_words)
-        category_matches = len(query_words & category_words)
-        subject_matches = len(query_words & subject_words)
-        value_matches = len(query_words & value_words)
+            return score
 
         return (
-            content_matches
-            + category_matches * 2
-            + value_matches * 2
-            + subject_matches * 3
+            score_field(memory["content"])
+            + score_field(memory["category"]) * 2
+            + score_field(memory["value"]) * 2
+            + score_field(memory["subject"]) * 3
         )
 
     def find_relevant_memories(self, *, query):

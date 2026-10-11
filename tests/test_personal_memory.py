@@ -471,3 +471,117 @@ def test_relevant_memory_prefers_subject_match_over_content_match(tmp_path):
     assert len(memories) == 2
     assert memories[0]["subject"] == "coffee"
     assert memories[0]["value"] == "Sumatra"
+
+def test_relevant_memory_matches_concept_alias(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC is my usual choice.",
+        category="preference",
+        subject="college",
+        value="UIUC",
+    )
+    store.save_memory(
+        content="Sumatra is my usual choice.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+    memories = store.find_relevant_memories(
+        query="Which university do I prefer?"
+    )
+
+    assert len(memories) == 1
+    assert memories[0]["subject"] == "college"
+    assert memories[0]["value"] == "UIUC"
+
+def test_literal_match_ranks_above_concept_alias(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC.",
+        category="education",
+        subject="college",
+        value="UIUC",
+        source_type="direct_user_statement",
+        confidence="high",
+    )
+    store.save_memory(
+        content="Oxford.",
+        category="education",
+        subject="university",
+        value="Oxford",
+        source_type="inference",
+        confidence="low",
+    )
+
+    memories = store.find_relevant_memories(query="university")
+
+    assert [memory["value"] for memory in memories] == [
+        "Oxford",
+        "UIUC",
+    ]
+    assert memories[0]["source_type"] == "inference"
+    assert memories[0]["confidence"] == "low"
+
+def test_concept_alias_excludes_inactive_memories(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC.",
+        category="education",
+        subject="college",
+        value="UIUC",
+        status="inactive",
+    )
+
+    memories_before = store.get_memories()
+
+    assert store.find_relevant_memories(query="university") == []
+    assert store.get_memories() == memories_before
+
+def test_concept_alias_preserves_provenance_and_confidence_ranking(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    for value, source, confidence in [
+        ("Inferred", "inference", "high"),
+        ("Unknown", None, None),
+        ("Direct low", "direct_user_statement", "low"),
+        ("Direct high", "direct_user_statement", "high"),
+    ]:
+        store.save_memory(
+            content=value,
+            category="education",
+            subject=f"college {value}",
+            value=value,
+            source_type=source,
+            confidence=confidence,
+        )
+
+    memories_before = store.get_memories()
+    memories = store.find_relevant_memories(query="university")
+
+    assert [memory["value"] for memory in memories] == [
+        "Direct high",
+        "Direct low",
+        "Inferred",
+        "Unknown",
+    ]
+    assert store.get_memories() == memories_before
+
+def test_concept_alias_matches_in_reverse_direction(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC.",
+        category="education",
+        subject="university",
+        value="UIUC",
+    )
+
+    memories = store.find_relevant_memories(query="college")
+
+    assert len(memories) == 1
+    assert memories[0]["subject"] == "university"
+    assert memories[0]["value"] == "UIUC"

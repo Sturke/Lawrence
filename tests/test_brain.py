@@ -245,3 +245,18 @@ def test_brain_updates_existing_structured_preference(tmp_path):
     assert memories[0]["content"] == (
         "My favorite coffee is Ethiopian Yirgacheffe."
     )
+
+def test_brain_recalls_memory_using_concept_alias(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    brain.respond("remember: My favorite college is UIUC.")
+    brain.respond("remember: My favorite coffee is Sumatra.")
+
+    response = brain.respond("Which university do I prefer?")
+
+    assert response == "My favorite college is UIUC."
