@@ -585,3 +585,45 @@ def test_concept_alias_matches_in_reverse_direction(tmp_path):
     assert len(memories) == 1
     assert memories[0]["subject"] == "university"
     assert memories[0]["value"] == "UIUC"
+
+def test_concept_alias_does_not_match_unrelated_query(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC.",
+        category="education",
+        subject="college",
+        value="UIUC",
+    )
+    store.save_memory(
+        content="Sumatra.",
+        category="preference",
+        subject="coffee",
+        value="Sumatra",
+    )
+
+    assert store.find_relevant_memories(
+        query="How should I repair my bicycle?"
+    ) == []
+
+def test_concept_alias_does_not_add_points_to_literal_match(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    memory = {
+        "content": "",
+        "category": None,
+        "subject": "college",
+        "value": None,
+    }
+
+    literal_score = store._score_memory_relevance(
+        memory=memory,
+        query_words={"college"},
+    )
+    combined_score = store._score_memory_relevance(
+        memory=memory,
+        query_words={"college", "university"},
+    )
+
+    assert literal_score == 3
+    assert combined_score == literal_score

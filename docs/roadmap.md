@@ -18,7 +18,7 @@
 - [x] Structured personal memory, updates, and legacy migration
 - [x] Provenance v1A
 - [x] Memory retrieval — Improved Retrieval v1A (structured fields, active filtering, provenance/confidence ranking, weighted relevance, scoring helper)
-- [ ] Memory relevance — Improved Retrieval v1B: conceptual relevance beyond literal word overlap. First increment implemented: bidirectional college/university matching, with alias matches scoring half of literal matches within each field. Existing field weights, active filtering, and provenance/confidence ordering are preserved. Validated with 57 passing tests; broader conceptual coverage remains open.
+- [ ] Memory relevance — Improved Retrieval v1B: conceptual relevance beyond literal word overlap. First increment implemented: bidirectional college/university matching, with alias matches scoring half of literal matches within each field. Existing field weights, active filtering, and provenance/confidence ordering are preserved. Validated with 59 passing tests; broader conceptual coverage remains open.
 - [ ] Memory rules — broader policy beyond current active-status filtering
 - [ ] User-controlled memory — extend existing explicit `remember:` support
 
