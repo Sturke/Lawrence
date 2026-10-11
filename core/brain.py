@@ -62,7 +62,10 @@ class Brain:
 
             normalized_question = last_message.strip().lower().rstrip("?.!")
 
-            if normalized_question == "what are my dream cars":
+            if normalized_question in {
+                "what are my dream cars",
+                "list my dream cars",
+            }:
                 dream_car_memories = [
                     memory
                     for memory in memories

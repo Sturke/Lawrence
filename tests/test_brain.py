@@ -325,3 +325,27 @@ def test_brain_excludes_inactive_dream_cars(tmp_path):
 
     assert response == "One of my dream cars is a 1969 Mustang Mach 1."
     assert memory.get_memories() == memories_before
+
+def test_brain_lists_dream_cars(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    statements = [
+        "One of my dream cars is a 1969 Mustang Mach 1.",
+        "One of my dream cars is a 1968 Cougar.",
+        "One of my dream cars is a 1970 Corvette.",
+    ]
+
+    brain.respond(
+        "remember: I have a fond appreciation for many classic muscle cars."
+    )
+    for statement in statements:
+        brain.respond(f"remember: {statement}")
+
+    response = brain.respond("List my dream cars")
+
+    assert response == "\n".join(statements)
