@@ -60,6 +60,25 @@ class Brain:
                 query=last_message
             )
 
+            normalized_question = last_message.strip().lower().rstrip("?.!")
+
+            if normalized_question == "what are my dream cars":
+                dream_car_memories = [
+                    memory
+                    for memory in memories
+                    if memory["content"].strip().lower().startswith(
+                        "one of my dream cars is "
+                    )
+                ]
+
+                if dream_car_memories:
+                    return "\n".join(
+                        memory["content"]
+                        for memory in dream_car_memories
+                    )
+
+                return "I don't have any dream cars remembered."
+
             if memories:
                 return memories[0]["content"]
 

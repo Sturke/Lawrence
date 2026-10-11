@@ -260,3 +260,68 @@ def test_brain_recalls_memory_using_concept_alias(tmp_path):
     response = brain.respond("Which university do I prefer?")
 
     assert response == "My favorite college is UIUC."
+
+def test_brain_recalls_all_dream_cars(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    statements = [
+        "One of my dream cars is a 1969 Mustang Mach 1.",
+        "One of my dream cars is a 1968 Cougar.",
+        "One of my dream cars is a 1970 Corvette.",
+    ]
+
+    brain.respond(
+        "remember: I have a fond appreciation for many classic muscle cars."
+    )
+    for statement in statements:
+        brain.respond(f"remember: {statement}")
+
+    response = brain.respond("What are my dream cars?")
+
+    for statement in statements:
+        assert statement in response
+
+    assert "fond appreciation" not in response
+
+def test_brain_reports_no_dream_cars_when_only_general_interest_exists(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    brain.respond(
+        "remember: I have a fond appreciation for many classic muscle cars."
+    )
+
+    response = brain.respond("What are my dream cars?")
+
+    assert response == "I don't have any dream cars remembered."
+
+def test_brain_excludes_inactive_dream_cars(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    memory.save_memory(
+        content="One of my dream cars is a 1968 Cougar.",
+        status="inactive",
+    )
+    brain.respond(
+        "remember: One of my dream cars is a 1969 Mustang Mach 1."
+    )
+
+    memories_before = memory.get_memories()
+    response = brain.respond("What are my dream cars?")
+
+    assert response == "One of my dream cars is a 1969 Mustang Mach 1."
+    assert memory.get_memories() == memories_before
