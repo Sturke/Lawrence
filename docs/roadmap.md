@@ -58,7 +58,13 @@
 - [ ] Fine-tuning evaluation
 - [ ] Determine whether custom model training is justified
 
-## Current Checkpoint — October 4, 2026
+## Current Status
+
+See [project_status.md](project_status.md) for the latest verified repository
+checkpoint and [accountability.md](accountability.md) for the session workflow.
+The milestone checklist above remains the implementation roadmap.
+
+## Historical Checkpoint — October 4, 2026
 
 **51 passing tests**, `f4f399c` — `Improve structured memory retrieval`.
 Evidence & Verification Foundation v0.1 was completed in `05b6778` —
