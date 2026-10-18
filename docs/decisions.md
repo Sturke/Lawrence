@@ -63,3 +63,56 @@ We need to discover Butler's actual requirements, behavior, architecture, and da
 **Decision:** Keep inactive memories in storage, exclude them from normal relevant-memory retrieval, and rank active matches by relevance before provenance and confidence. Weight content/category/value/subject matches 1/2/2/3 and isolate relevance scoring in `_score_memory_relevance()`.
 
 **Reason:** Obsolete information should not supply current answers; strong provenance should not elevate irrelevant information. Structured subjects should matter more than incidental mentions. Improved Retrieval v1A is the initial explicit policy; conceptual matching is the next target in v1B.
+
+---
+
+## Decision 006 — Adopt Local-First, Cloud-Optional Architecture
+
+**Date:** October 18, 2026
+
+**Decision:**
+
+Lawrence shall follow a local-first, cloud-optional architecture,
+with the long-term objective of operating all essential capabilities
+independently of internet connectivity and external AI providers.
+
+Cloud services may enhance Lawrence's capabilities but shall not
+become mandatory dependencies for core operation, security,
+authorization, or autonomy.
+
+Local AI inference, graceful degradation, and offline operation
+shall be supported through incremental development.
+
+**Reason:**
+
+Lawrence is intended to become a dependable, always-available
+personal assistant, communications Gatekeeper, and eventually
+a robotics coordination system.
+
+Dependence on external AI providers or internet connectivity
+would introduce availability, privacy, security, and operational
+risks that conflict with these long-term objectives.
+
+This decision extends Decision 001, which established AI model
+replaceability, by requiring eventual independence from
+external AI services.
+
+**Implementation:**
+
+Development shall proceed through three stages:
+
+1. Hybrid operation using local infrastructure and optional
+   external AI services.
+2. Offline-capable operation with essential local services
+   and AI reasoning.
+3. Fully local operation of all essential capabilities without
+   external AI dependencies.
+
+Full offline independence is a long-term objective, not an
+immediate implementation requirement.
+
+The communications Gatekeeper remains the primary product
+priority. Improved Retrieval v1B remains the current
+development milestone.
+
+**Architecture Reference:** `docs/architecture.md`

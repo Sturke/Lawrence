@@ -85,6 +85,23 @@ remain future capabilities rather than completed features.
 
 The hardware projects support Burke’s learning while building Lawrence; they do not replace Improved Retrieval v1B as the next assistant-development target.
 
+## Local-First Architecture Commitment
+
+**Decision 006 — October 18, 2026**
+
+Lawrence shall follow a local-first, cloud-optional architecture,
+with eventual offline independence for all essential capabilities.
+
+This requirement is established in `docs/architecture.md` and
+recorded in `docs/decisions.md`.
+
+The Lawrence Design Charter and master strategic roadmap should
+be reconciled with this decision before implementation planning
+for offline independence begins.
+
+This architectural commitment does not change the current
+implementation priority: Improved Retrieval v1B.
+
 ## Relationship to the Lawrence Master Documents
 
 This repository roadmap is the **implementation roadmap for the Butler codebase**.

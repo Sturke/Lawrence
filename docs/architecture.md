@@ -1,5 +1,70 @@
 # Butler Architecture
 
+## Foundational Design Principles
+
+### Local-First, Cloud-Optional, Offline-Capable
+
+**Architectural decision:** October 18, 2026
+
+Lawrence shall be designed as a local-first, cloud-optional system,
+with the long-term objective of maintaining all essential capabilities
+independently of internet connectivity or external AI providers.
+
+Cloud services may enhance Lawrence's capabilities but must not become
+indispensable to his core operation, security, or autonomy.
+
+#### Design Requirements
+
+1. **Local Ownership**
+   Persistent memory, configuration, permissions, and critical
+   operational data shall remain under local control.
+
+2. **Cloud Independence**
+   External AI services shall be optional and replaceable.
+   The architecture must support local AI inference without
+   requiring fundamental redesign.
+
+3. **Offline Operation**
+   Essential capabilities shall eventually remain operational
+   during internet outages, subject to available local resources.
+
+4. **Graceful Degradation**
+   When external services become unavailable, Lawrence shall
+   continue providing supported local capabilities and clearly
+   communicate any resulting limitations.
+
+5. **Security Independence**
+   Critical security decisions, authorization, and permission
+   enforcement shall not depend on external AI providers.
+
+6. **Evidence Integrity**
+   Lawrence shall distinguish verified information, uncertain
+   information, and information that cannot currently be verified
+   because external sources are unavailable.
+
+7. **Robotics Safety**
+   Safety-critical robotic functions shall operate locally,
+   without requiring continuous connectivity to Lawrence's
+   central server or external services.
+
+#### Implementation Strategy
+
+Lawrence's development shall progress incrementally:
+
+- **Phase 1 — Hybrid:** Local infrastructure with optional external
+  AI services.
+- **Phase 2 — Offline-Capable:** Essential local services and AI
+  reasoning continue during internet outages.
+- **Phase 3 — Locally Independent:** All essential capabilities
+  operate without external AI dependencies.
+
+Full offline independence is a long-term architectural objective,
+not a requirement for the initial Minimum Useful Butler.
+
+The communications Gatekeeper remains the primary product
+priority, and Improved Retrieval v1B remains the current
+development milestone.
+
 ## Current Architecture
 
 Butler is currently organized into separate components with distinct responsibilities.
