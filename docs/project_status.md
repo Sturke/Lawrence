@@ -2,53 +2,56 @@
 
 ## Verified checkpoint — October 18, 2026
 
-- Branch: `main`; base HEAD: `3002136` (`Document Lawrence local-first
-  architecture decision`). Working tree was clean at startup.
-- Session objective: protect the existing v1B “List my dream cars” response
-  when the store is empty or contains only inactive dream-car entries.
-- Outcome: completed. Added two regression tests in `tests/test_brain.py`;
-  both pass against the existing implementation, so no runtime change was needed.
-  The tests also verify that recall does not change stored memories.
-- Changed files: `tests/test_brain.py` and `docs/project_status.md`.
-  Changes remain uncommitted; no commit or push performed.
+- Branch: `main`; base HEAD: `5d847b5`. Working tree was clean before this increment.
+- Session objective: extend the existing college/university retrieval concept
+  to recognize the adjacent phrase “higher education”.
+- Outcome: implemented and tested. Phrase recognition preserves word order
+  and adjacency in queries and memory fields.
+- Changed files: `memory/personal.py`, `tests/test_personal_memory.py`,
+  `tests/test_brain.py`, `docs/roadmap.md`, and this status record.
+  Changes remain uncommitted; no commit or push performed for this increment.
 
 ## Implementation evidence and limits
 
 Improved Retrieval v1B remains **partial**, as recorded in [the roadmap](roadmap.md).
-`memory/personal.py` implements the bounded college/university alias group with
-half-weight alias scoring. `core/brain.py` handles the two explicit dream-car
-collection questions and filters active retrieval results by content prefix.
-The new tests cover the empty and inactive-only cases for “List my dream cars”.
-Broader conceptual retrieval and general collection questions remain open.
+The explicit alias group now includes college, university, and “higher education”.
+Alias matches retain half-weight scoring within each field. Literal word scoring,
+field weights, active filtering, and provenance/confidence ordering are preserved.
 
-The previous status record described documentation as uncommitted at `931768e`.
-Current Git history shows that work committed in `bfe3ff1`, followed by the
-local-first architecture decision in `3002136`. Decisions and roadmap intent
-remain unchanged by this session.
+Seven new tests cover phrase retrieval, reverse matching, incomplete and
+nonadjacent phrase rejection, literal-match priority, the Brain response,
+and prevention of an extra alias bonus for a literal phrase match.
+Existing dream-car collection behavior remains covered by the regression suite.
 
-`docs/architecture.md` describes literal-only matching in its historical v1A
-section; it does not yet document the current v1B additions. External master
-documents, manual restart behavior, and the live personal database were not
-revalidated. The Charter/Register draft status and unrun T01–T12 are unchanged.
+Phrase matching follows existing case and punctuation normalization.
+This increment does not add unrestricted semantic retrieval or general inference.
+
+The architecture's v1A section still describes historical literal-only matching.
+External master documents, the live personal database, and manual restart
+behavior were not revalidated. Charter/Register draft status and unrun T01–T12
+remain unchanged.
 
 ## Verification
 
-- Baseline: `.venv/bin/python3 -m pytest -q` — **63 passed in 0.17s**.
-  One cache-write warning occurred before repository write access was granted.
-- After adding tests: `PATH="$PWD/.venv/bin:$PATH" python3 -m pytest -q` —
-  **65 passed in 0.16s**, exit 0, no warnings.
-- Final diff reviewed; `git diff --check` passed.
+- Prior committed checkpoint: 65 passing tests.
+- New acceptance test before implementation: 1 failed, 65 passed,
+  confirming that “higher education” did not retrieve the college memory.
+- After implementation and boundary tests: `python3 -m pytest -q` —
+  **72 passed in 0.18s**.
+- `git diff --check` — passed after the code and test changes.
+- Code, test, and documentation diffs reviewed; whitespace checks passed.
 
-Tests use temporary SQLite databases. No interactive Butler/Warp session or
-restart check was run. Passing tests establish only the exercised behavior.
+Tests use temporary SQLite databases. No interactive Butler session or restart
+check was run. Passing tests establish only the exercised behavior.
 
 ## Handoff
 
-No failing checks or implementation blockers found. The scoped regression-test
-increment is ready for review. Improved Retrieval v1B is not complete.
+Implementation and automated verification are complete for this bounded increment.
+The increment is ready for staging and commit.
+Improved Retrieval v1B is not complete.
 
-**Next action (proposed):** select one additional bounded conceptual-retrieval
-example and define its acceptance test with Burke before expanding behavior.
+**Next action:** Stage the five reviewed files, commit, and push.
 
 **Parked:** refresh the architecture's historical retrieval description in a
-focused documentation pass. Preserve unrelated roadmap and hardware work.
+focused documentation pass. Broader conceptual coverage requires a separately
+defined example and acceptance test.

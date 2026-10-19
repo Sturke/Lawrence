@@ -627,3 +627,107 @@ def test_concept_alias_does_not_add_points_to_literal_match(tmp_path):
 
     assert literal_score == 3
     assert combined_score == literal_score
+
+def test_concept_alias_matches_higher_education_phrase(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+
+    store.save_memory(
+        content="UIUC.",
+        category="preference",
+        subject="college",
+        value="UIUC",
+    )
+
+    memories = store.find_relevant_memories(
+        query="Which higher education institution do I prefer?"
+    )
+
+    assert len(memories) == 1
+    assert memories[0]["subject"] == "college"
+    assert memories[0]["value"] == "UIUC"
+
+def test_higher_education_alias_matches_in_reverse(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    store.save_memory(
+        content="UIUC.",
+        category="preference",
+        subject="higher education",
+        value="UIUC",
+    )
+
+    for query in ("college", "university"):
+        memories = store.find_relevant_memories(query=query)
+
+        assert len(memories) == 1
+        assert memories[0]["value"] == "UIUC"
+
+
+def test_higher_education_alias_requires_complete_adjacent_phrase(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    store.save_memory(
+        content="UIUC.",
+        category="preference",
+        subject="college",
+        value="UIUC",
+    )
+
+    for query in (
+        "higher",
+        "education",
+        "education higher",
+        "higher quality education",
+    ):
+        assert store.find_relevant_memories(query=query) == []
+
+
+def test_higher_education_alias_requires_adjacent_phrase_in_memory(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    store.save_memory(
+        content="UIUC.",
+        category="preference",
+        subject="higher quality education",
+        value="UIUC",
+    )
+
+    assert store.find_relevant_memories(query="college") == []
+
+def test_literal_college_match_ranks_above_phrase_alias(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    store.save_memory(
+        content="UIUC.",
+        subject="higher education",
+        value="UIUC",
+        source_type="direct_user_statement",
+        confidence="high",
+    )
+    store.save_memory(
+        content="Oxford.",
+        subject="college",
+        value="Oxford",
+        source_type="inference",
+        confidence="low",
+    )
+
+    memories = store.find_relevant_memories(query="college")
+
+    assert [memory["value"] for memory in memories] == [
+        "Oxford",
+        "UIUC",
+    ]
+
+def test_literal_higher_education_phrase_has_no_alias_bonus(tmp_path):
+    store = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    memory = {
+        "content": "",
+        "category": None,
+        "subject": "higher education",
+        "value": None,
+    }
+
+    score = store._score_memory_relevance(
+        memory=memory,
+        query_words={"higher", "education"},
+        query_tokens=("higher", "education"),
+    )
+
+    assert score == 6

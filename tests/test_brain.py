@@ -382,3 +382,18 @@ def test_brain_lists_no_dream_cars_when_only_inactive_entries_exist(tmp_path):
 
     assert response == "I don't have any dream cars remembered."
     assert memory.get_memories() == memories_before
+
+def test_brain_recalls_college_using_higher_education_phrase(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+    brain.respond("remember: My favorite college is UIUC.")
+
+    response = brain.respond(
+        "Which higher education institution do I prefer?"
+    )
+
+    assert response == "My favorite college is UIUC."

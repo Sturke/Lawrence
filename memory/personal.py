@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 # Explicit retrieval relationships; these do not establish factual equivalence.
 CONCEPT_ALIAS_GROUPS = (
-    frozenset({"college", "university"}),
+    frozenset({"college", "university", "higher education"}),
 )
 
 class PersonalMemoryStore:
@@ -210,24 +210,47 @@ class PersonalMemoryStore:
             if query in memory["content"].lower()
         ]
 
-    def _score_memory_relevance(self, *, memory, query_words):
-        """Score literal matches and a small set of concept aliases."""
+    def _score_memory_relevance(
+        self, *, memory, query_words, query_tokens=()
+    ):
+        """Score literal matches and explicit word or phrase aliases."""
+
+        def concept_terms(words, tokens):
+            terms = set(words)
+
+            for group in CONCEPT_ALIAS_GROUPS:
+                for alias in group:
+                    phrase = tuple(alias.split())
+                    if len(phrase) < 2:
+                        continue
+
+                    if any(
+                        tokens[index:index + len(phrase)] == phrase
+                        for index in range(len(tokens) - len(phrase) + 1)
+                    ):
+                        terms.add(alias)
+
+            return terms
+
+        query_terms = concept_terms(query_words, query_tokens)
 
         def score_field(text):
-            field_words = {
+            field_tokens = tuple(
                 word.strip(".,?!").lower()
                 for word in (text or "").split()
-            }
+            )
+            field_words = set(field_tokens)
+            field_terms = concept_terms(field_words, field_tokens)
 
             literal_matches = query_words & field_words
             score = len(literal_matches)
 
             for group in CONCEPT_ALIAS_GROUPS:
-                # Count a concept once; literal matches take priority.
+                # Count a concept once; shared literal terms take priority.
                 if (
-                    query_words & group
-                    and field_words & group
-                    and not literal_matches & group
+                    query_terms & group
+                    and field_terms & group
+                    and not query_terms & field_terms & group
                 ):
                     score += 0.5
 
@@ -242,10 +265,12 @@ class PersonalMemoryStore:
 
     def find_relevant_memories(self, *, query):
         """Return active memories ranked by relevance to the query."""
-        query_words = {
+        query_tokens = tuple(
             word.strip(".,?!").lower()
             for word in query.split()
-            if len(word.strip(".,?!")) > 3
+        )
+        query_words = {
+            word for word in query_tokens if len(word) > 3
         }
 
         source_strength = {
@@ -267,6 +292,7 @@ class PersonalMemoryStore:
             score = self._score_memory_relevance(
                 memory=memory,
                 query_words=query_words,
+                query_tokens=query_tokens,
             )
 
             if score > 0:
