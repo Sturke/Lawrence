@@ -349,3 +349,36 @@ def test_brain_lists_dream_cars(tmp_path):
     response = brain.respond("List my dream cars")
 
     assert response == "\n".join(statements)
+
+
+def test_brain_lists_no_dream_cars_when_memory_is_empty(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    response = brain.respond("List my dream cars")
+
+    assert response == "I don't have any dream cars remembered."
+    assert memory.get_memories() == []
+
+
+def test_brain_lists_no_dream_cars_when_only_inactive_entries_exist(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+    memory.save_memory(
+        content="One of my dream cars is a 1968 Cougar.",
+        status="inactive",
+    )
+    memories_before = memory.get_memories()
+
+    response = brain.respond("List my dream cars")
+
+    assert response == "I don't have any dream cars remembered."
+    assert memory.get_memories() == memories_before
