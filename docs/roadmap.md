@@ -18,8 +18,10 @@
 - [x] Structured personal memory, updates, and legacy migration
 - [x] Provenance v1A
 - [x] Memory retrieval — Improved Retrieval v1A (structured fields, active filtering, provenance/confidence ranking, weighted relevance, scoring helper)
-- [ ] Memory relevance — Improved Retrieval v1B: conceptual relevance beyond literal word overlap. Bounded bidirectional matching supports college, university, and the adjacent phrase “higher education”, with alias matches scoring half of literal matches within each field. Existing field weights, active filtering, and provenance/confidence ordering are preserved. Validated with 72 passing tests; broader conceptual coverage remains open.
-    - Bounded collection recall: “What are my dream cars?” and “List my dream cars” return active memories beginning “One of my dream cars is …” in existing retrieval order. General muscle-car appreciation is excluded. Automated tests and manual recall after restart passed; broader collection questions and paraphrases remain open.
+- [x] Memory relevance — Improved Retrieval v1B: bounded conceptual matching for college, university, and the adjacent phrase “higher education”; reusable collection recall through “What are my <collection>?” and “List my <collection>”. Validated with 75 passing tests and manual dream-car and higher-education recall.
+    - Alias matches retain half-weight scoring within each field. Existing field weights, active filtering, and provenance/confidence ordering are preserved.
+    - Collection recall selects active statements beginning “One of my <collection> is …” in existing retrieval order. Collection names require matching words and spacing; capitalization and trailing question punctuation are normalized. Storage is unchanged.
+    - Unrestricted semantic understanding, automatic memory capture, collection-name aliases, and broader question paraphrases remain future work.
 - [ ] Memory rules — broader policy beyond current active-status filtering
 - [ ] User-controlled memory — extend existing explicit `remember:` support
 

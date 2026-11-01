@@ -1,57 +1,64 @@
 # Current Project Status
 
-## Verified checkpoint — October 18, 2026
+## Verified checkpoint — November 1, 2026
 
-- Branch: `main`; base HEAD: `5d847b5`. Working tree was clean before this increment.
-- Session objective: extend the existing college/university retrieval concept
-  to recognize the adjacent phrase “higher education”.
-- Outcome: implemented and tested. Phrase recognition preserves word order
-  and adjacency in queries and memory fields.
-- Changed files: `memory/personal.py`, `tests/test_personal_memory.py`,
-  `tests/test_brain.py`, `docs/roadmap.md`, and this status record.
-  Changes remain uncommitted; no commit or push performed for this increment.
+- Branch: `main`; base HEAD: `c0638fd`, synchronized with `origin/main`
+  at session startup. The starting working tree was clean.
+- Objective: complete bounded Improved Retrieval v1B by making collection
+  recall reusable, protecting existing behavior, and aligning documentation.
+- Outcome: bounded v1B implemented and verified; final review complete and commit approval pending.
+- Changed files: `core/brain.py`, `tests/test_brain.py`, `README.md`,
+  `docs/architecture.md`, `docs/roadmap.md`, and this status record.
+- Changes are uncommitted. No commit or push performed in this session.
 
 ## Implementation evidence and limits
 
-Improved Retrieval v1B remains **partial**, as recorded in [the roadmap](roadmap.md).
-The explicit alias group now includes college, university, and “higher education”.
-Alias matches retain half-weight scoring within each field. Literal word scoring,
-field weights, active filtering, and provenance/confidence ordering are preserved.
+The roadmap records the completed bounded milestone; the architecture describes
+its behavior. Existing college/university/higher-education matching remains
+unchanged.
 
-Seven new tests cover phrase retrieval, reverse matching, incomplete and
-nonadjacent phrase rejection, literal-match priority, the Brain response,
-and prevention of an extra alias bonus for a literal phrase match.
-Existing dream-car collection behavior remains covered by the regression suite.
+Collection recall now supports “What are my <collection>?” and
+“List my <collection>”, selecting explicitly labeled collection statements
+from existing ranked, active retrieval results. Storage, relevance scoring,
+provenance, and confidence ordering are unchanged.
 
-Phrase matching follows existing case and punctuation normalization.
-This increment does not add unrestricted semantic retrieval or general inference.
+Three new tests demonstrate a second collection, separation of collections,
+inactive exclusion, empty results, and unchanged stored records.
 
-The architecture's v1A section still describes historical literal-only matching.
-External master documents, the live personal database, and manual restart
-behavior were not revalidated. Charter/Register draft status and unrun T01–T12
-remain unchanged.
+Collection names require matching words and spacing. Selection still depends
+on existing relevance retrieval, which ignores query words of three characters
+or fewer. Collection names consisting only of such words may not retrieve
+their entries. Broader paraphrases, collection aliases, automatic memory
+capture, and unrestricted semantic understanding remain outside this milestone.
 
 ## Verification
 
-- Prior committed checkpoint: 65 passing tests.
-- New acceptance test before implementation: 1 failed, 65 passed,
-  confirming that “higher education” did not retrieve the college memory.
-- After implementation and boundary tests: `python3 -m pytest -q` —
-  **72 passed in 0.18s**.
-- `git diff --check` — passed after the code and test changes.
-- Code, test, and documentation diffs reviewed; whitespace checks passed.
+All commands were run against the uncommitted working tree based on `c0638fd`.
 
-Tests use temporary SQLite databases. No interactive Butler session or restart
-check was run. Passing tests establish only the exercised behavior.
+- Baseline: `python3 -m pytest -q` — 72 passed in 0.18s.
+- New second-collection acceptance test before implementation:
+  1 failed, confirming that only the first book was returned.
+- Final regression: `python3 -m pytest -q` — 75 passed in 0.18s.
+- `git diff --check` — no output before this status update.
+- Code/test, roadmap, and architecture diffs reviewed in Chat.
+- Manual: `python3 -m core.butler` recalled the three existing dream cars
+  through both supported question templates after startup.
+- Manual: a higher-education question retrieved the existing UIUC memory.
+- Manual: “List my Dreamcars” returned no entries, demonstrating the
+  matching-word-spacing limitation.
+
+Automated collection tests use temporary SQLite databases. Manual recall used
+existing personal memories without adding entries. External master documents
+and Charter/Register T01–T12 scenarios were not validated.
 
 ## Handoff
 
-Implementation and automated verification are complete for this bounded increment.
-The increment is ready for staging and commit.
-Improved Retrieval v1B is not complete.
+Bounded v1B implementation, automated verification, manual checks, and final
+diff review are complete. Changes remain uncommitted.
 
-**Next action:** Stage the five reviewed files, commit, and push.
+Next action: obtain Burke’s explicit approval to commit the six reviewed files.
+Push also requires explicit approval.
 
-**Parked:** refresh the architecture's historical retrieval description in a
-focused documentation pass. Broader conceptual coverage requires a separately
-defined example and acceptance test.
+Parked: broader language understanding, short-word collection retrieval,
+collection-name aliases, and automatic memory capture. No subsequent
+implementation milestone is selected.

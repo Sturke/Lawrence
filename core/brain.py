@@ -62,25 +62,31 @@ class Brain:
 
             normalized_question = last_message.strip().lower().rstrip("?.!")
 
-            if normalized_question in {
-                "what are my dream cars",
-                "list my dream cars",
-            }:
-                dream_car_memories = [
+            collection = None
+            for question_prefix in ("what are my ", "list my "):
+                if normalized_question.startswith(question_prefix):
+                    collection = normalized_question[
+                        len(question_prefix):
+                    ].strip()
+                    break
+
+            if collection:
+                memory_prefix = f"one of my {collection} is "
+                collection_memories = [
                     memory
                     for memory in memories
                     if memory["content"].strip().lower().startswith(
-                        "one of my dream cars is "
+                        memory_prefix
                     )
                 ]
 
-                if dream_car_memories:
+                if collection_memories:
                     return "\n".join(
                         memory["content"]
-                        for memory in dream_car_memories
+                        for memory in collection_memories
                     )
 
-                return "I don't have any dream cars remembered."
+                return f"I don't have any {collection} remembered."
 
             if memories:
                 return memories[0]["content"]

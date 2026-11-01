@@ -397,3 +397,94 @@ def test_brain_recalls_college_using_higher_education_phrase(tmp_path):
     )
 
     assert response == "My favorite college is UIUC."
+
+def test_brain_recalls_a_second_collection(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    books = [
+        "One of my favorite books is Dune.",
+        "One of my favorite books is The Hobbit.",
+    ]
+
+    for statement in books:
+        brain.respond(f"remember: {statement}")
+
+    brain.respond(
+        "remember: One of my dream cars is a 1968 Cougar."
+    )
+    brain.respond("remember: I enjoy browsing books.")
+
+    for question in [
+        "List my favorite books",
+        "What are my favorite books?",
+    ]:
+        assert brain.respond(question) == "\n".join(books)
+
+def test_brain_keeps_collections_separate_and_excludes_inactive_entries(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    book = "One of my favorite books is Dune."
+    audiobook = "One of my favorite audiobooks is The Hobbit."
+
+    brain.respond(f"remember: {book}")
+    brain.respond(f"remember: {audiobook}")
+    memory.save_memory(
+        content="One of my favorite books is Foundation.",
+        status="inactive",
+    )
+
+    memories_before = memory.get_memories()
+
+    for question in [
+        "List my favorite books",
+        "What are my favorite books?",
+    ]:
+        assert brain.respond(question) == book
+
+    assert brain.respond("List my favorite audiobooks") == audiobook
+    assert memory.get_memories() == memories_before
+
+def test_brain_reports_no_entries_for_other_collections(tmp_path):
+    memory = PersonalMemoryStore(tmp_path / "personal.sqlite3")
+    brain = Brain(
+        {"identity": {"role": "personal AI assistant"}},
+        Conversation(),
+        memory,
+    )
+
+    for question in [
+        "List my favorite books",
+        "What are my favorite books?",
+    ]:
+        assert brain.respond(question) == (
+            "I don't have any favorite books remembered."
+        )
+
+    memory.save_memory(
+        content="One of my favorite books is Dune.",
+        status="inactive",
+    )
+    brain.respond(
+        "remember: One of my favorite audiobooks is The Hobbit."
+    )
+    memories_before = memory.get_memories()
+
+    for question in [
+        "List my favorite books",
+        "What are my favorite books?",
+    ]:
+        assert brain.respond(question) == (
+            "I don't have any favorite books remembered."
+        )
+
+    assert memory.get_memories() == memories_before

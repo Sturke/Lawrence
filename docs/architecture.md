@@ -90,7 +90,7 @@ Butler is currently organized into separate components with distinct responsibil
 - **Provenance:** records where information came from. Source identity alone does not establish truth.
 - **Evidence/Verification:** distinguishes received information from an evaluation of a claim and the reasons for trusting or disputing it.
 - **Retrieval:** selects relevant, currently usable information. Relevance and evidentiary strength are separate dimensions.
-- **Reasoning:** will determine which conclusions and answers/actions the available information can responsibly support. Brain currently uses simple response rules and returns the highest-ranked matching memory; general reasoning is future work.
+- **Reasoning:** will determine which conclusions and answers/actions the available information can responsibly support. Brain currently uses simple response rules, returning the highest-ranked matching memory for ordinary recall or multiple matching entries for supported collection questions; general reasoning is future work.
 
 The conceptual direction is `Question/Input → Gatekeeper → Retrieval → Evidence/Provenance → Verification → Reasoning → Answer/Action`. This is an architectural guide, not an implemented end-to-end pipeline.
 
@@ -120,4 +120,20 @@ Query words are lowercased, stripped of `.,?!`, and retained only when longer th
 
 Ranking is descending by **relevance, then provenance, then confidence**. Source strengths are `direct_user_statement=3`, `inference=1`; confidence strengths are `high=3`, `medium=2`, `low=1`. Missing or unrecognized values receive 0. Provenance cannot make an irrelevant memory relevant. The weights are an initial testable policy, not a calibrated truth measure.
 
-Retrieval still requires literal word overlap in at least one searched field. **Improved Retrieval v1B** will address conceptual relevance when a question and memory use different words, such as “What do I like to drink?” versus a coffee preference; the implementation approach remains open.
+## Improved Retrieval v1B
+
+The v1A scoring and ranking policy remains the foundation. Explicit conceptual
+matching now connects college, university, and the adjacent phrase “higher
+education” in queries and memory fields. Phrase recognition preserves word order
+and adjacency. An alias match adds half the corresponding literal word weight
+within a field; a shared concept term prevents an additional alias bonus.
+
+Brain also supports collection questions using “What are my <collection>?” and
+“List my <collection>”. It filters the existing ranked, active retrieval results
+to statements beginning “One of my <collection> is …” and returns their content
+on separate lines. If no matching entries are retrieved, it reports that none
+are remembered. Collection recall does not alter storage or provenance.
+
+Collection names require matching words and spacing. Question matching ignores
+capitalization and trailing `?.!` punctuation. This is bounded pattern matching,
+not unrestricted semantic understanding, automatic memory capture, or inference.

@@ -32,8 +32,8 @@ The underlying AI model should initially be replaceable. Butler's identity, memo
 Early development. Project Butler is the repository/project name; Lawrence is the personal assistant being developed.
 
 See [Current Project Status](docs/project_status.md) for the verified checkpoint,
-current test results, remaining work, and session handoff. Improved Retrieval v1B
-is partially implemented; broader conceptual retrieval remains open.
+current test results, remaining work, and session handoff. Bounded Improved
+Retrieval v1B is complete; see the roadmap for supported behavior and limits.
 
 Start each development session with [AGENTS.md](AGENTS.md) and the
 [Project Accountability Protocol](docs/accountability.md).
