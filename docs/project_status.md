@@ -168,11 +168,11 @@
 - Release baseline: clean `main` at `1462106`. The full test suite passed
   all 93 tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
   The release validation notes were committed as `f56d6c5` and pushed.
-- Gatekeeper 1.0 release is ready for review. The JSON assessment reports
-  version `1.0`, and the assessment guide describes the validated workflow
-  and its limits. Assessment logic and text report behavior are unchanged.
-- Started from clean `main` at `f56d6c5`. Version, tests, release notes,
-  and status updates are uncommitted. All 93 tests passed after the version
-  update with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
-  `git diff --check` passed.
-- Next: review, commit, and push the 1.0 release change.
+- Completed milestone — [Gatekeeper Email Assessment 1.0](gatekeeper-assessment.md)
+  was committed as `dd8352b` and pushed to GitHub’s `main` branch. The JSON
+  assessment reports version `1.0`, and the guide documents the validated
+  saved-email workflow and its limits.
+- All 93 tests passed after the version update with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. At closeout, `main`
+  and `origin/main` pointed to `dd8352b` and the working tree was clean
+  before this documentation update.
