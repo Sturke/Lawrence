@@ -92,7 +92,7 @@ class LinkDomainParser(HTMLParser):
 
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
-    claimed_address=None, approved_senders=(),
+    claimed_address=None, approved_senders=(), sender_domain_authentication=None,
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
@@ -185,7 +185,11 @@ def assess_email(
         })
 
     return {
-        "version": "0.10",
+        "version": "0.11",
+        "sender_domain_authentication": sender_domain_authentication or {
+            "status": "not_checked",
+            "reason": "dkim_verification_not_requested",
+        },
         "sender_trust": {
             "claimed_address": claimed_address,
             "approved_address_match": claimed_address in approved_senders,

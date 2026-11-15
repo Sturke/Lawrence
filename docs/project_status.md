@@ -123,10 +123,11 @@
   address only when supplied with `--approved-sender`. Both runs reported
   the sender as unverified.
 - The v0.9 checkpoint was closed in `d0c933e`.
-- Active milestone — Gatekeeper v0.10 stores explicit sender approvals in
-  SQLite and supports approving, listing, and removing addresses.
-- Started from clean `main` at `d0c933e`. The store, sender command, importer,
-  assessment, tests, guide, and status update are uncommitted.
+- Completed milestone — Gatekeeper v0.10 was committed as `db25c1e` and
+  pushed to `main`. It stores explicit sender approvals in SQLite and supports
+  approving, listing, and removing addresses.
+- Started from clean `main` at `d0c933e`. At closeout, `main` and
+  `origin/main` pointed to `db25c1e`.
 - The new test initially failed because the sender command was absent.
   After implementation, `.venv/bin/python -m pytest -q` passed all 91 tests.
   The test confirms persistence across imports, removal, and unverified
@@ -134,5 +135,17 @@
 - Manual v0.10 verification in Warp: the saved Apple export matched its
   SQLite approval without a per-run option. Sender status was `unverified`
   and risk disposition was `inconclusive`.
-- Next: review and commit. A trusted authentication source and positive trust
-  decision remain future work.
+- Active milestone — Gatekeeper v0.11 adds opt-in DKIM verification against
+  DNS keys, with exact From-domain matching and full-body signatures.
+- Started at `db25c1e` on `main`, with the v0.10 status closeout already
+  pending. That edit is preserved. The v0.11 changes are uncommitted.
+- Standalone Warp probe verified a signature on the saved Apple export
+  with signing domain and From domain both `email.apple.com`.
+- The CLI test first failed because `--verify-dkim` was absent. After
+  implementation, `.venv/bin/python -m pytest -q` passed all 92 tests using
+  a stub verifier for the integration test. `git diff --check` passed.
+- Manual v0.11 verification in Warp: the integrated CLI authenticated
+  `email.apple.com` via DKIM for the saved Apple export. The per-run approved
+  address matched, mailbox identity stayed unverified, and the risk verdict
+  was inconclusive with no findings.
+- Next: review and commit the v0.11 changes.

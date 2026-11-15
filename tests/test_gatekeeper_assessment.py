@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.10"
+    assert record["version"] == "0.11"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.10"
+    assert record["version"] == "0.11"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
@@ -317,3 +317,50 @@ def test_saved_sender_approval_survives_imports_and_can_be_removed(tmp_path, cap
     capsys.readouterr()
     main(assessment)
     assert not json.loads(capsys.readouterr().out)["sender_trust"]["approved_address_match"]
+
+
+def test_opt_in_reports_domain_authentication_separately(tmp_path, capsys, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    source = tmp_path / "signed.eml"
+    raw = (
+        b"From: notices@example.com\r\n"
+        b"DKIM-Signature: placeholder\r\n"
+        b"Date: Sat, 14 Nov 2026 10:00:00 -0600\r\n"
+        b"Subject: Meeting notes\r\n\r\nVerify your password.\r\n"
+    )
+    source.write_bytes(raw)
+    calls = []
+
+    class Verifier:
+        def __init__(self, message):
+            assert message == raw
+            self.domain = domain
+            self.signature_fields = {b"a": b"rsa-sha256", **fields}
+
+        def verify(self, idx):
+            calls.append(idx)
+            return valid
+
+    monkeypatch.setitem(sys.modules, "dkim", SimpleNamespace(
+        DKIM=Verifier, DKIMException=ValueError,
+    ))
+    args = [str(source), "--assess", "--database", str(tmp_path / "messages.sqlite3"),
+            "--approved-sender", "notices@example.com"]
+    main(args)
+    assert json.loads(capsys.readouterr().out)["sender_trust"]["status"] == "unverified"
+    assert calls == []
+
+    for domain, valid, fields, expected in (
+        (b"example.com", True, {}, "authenticated"),
+        (b"other.example", True, {}, "unverified"),
+        (b"example.com", False, {}, "unverified"),
+        (b"example.com", True, {b"l": b"0"}, "unverified"),
+    ):
+        main([*args, "--verify-dkim"])
+        record = json.loads(capsys.readouterr().out)
+        assert record["sender_domain_authentication"]["status"] == expected
+        assert record["sender_trust"]["approved_address_match"]
+        assert record["sender_trust"]["status"] == "unverified"
+        assert record["disposition"] == "review_required"

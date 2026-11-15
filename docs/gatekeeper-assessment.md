@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.10
+# Gatekeeper Email Assessment v0.11
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -90,7 +90,7 @@ several phrases match. The record offers no clearance or sender authentication.
 
 Review the quoted evidence in the original message and verify requests through
 a trusted channel. JSON can be saved by the caller. SQLite stores the imported
-message. The assessment makes no network requests and takes no inbox actions.
+message. By default, assessments run offline. Gatekeeper takes no inbox actions.
 
 
 The `checks` object describes which domain comparisons ran for this message.
@@ -114,10 +114,9 @@ record reports the claimed mailbox from the `From` header and whether it
 exactly matches an approved address. Gatekeeper requires one unambiguous
 mailbox to report a claimed address.
 
-A match remains `unverified` because saved email currently supplies no
-authentication evidence that Gatekeeper trusts. This includes authentication
-results written in the exported message. Sender trust is reported separately
-from the existing risk disposition.
+An address match leaves mailbox identity `unverified`. Results written in the
+exported message do not establish authentication. Sender trust is reported
+separately from the existing risk disposition.
 
 
 To persist an approval, use the sender management commands. They share the
@@ -132,3 +131,17 @@ importer's default SQLite database. For an isolated test, pass the same
 
 Approvals store the exact address and its UTC approval time. Assessments
 consult saved approvals along with any addresses supplied for that command.
+
+
+## Optional DKIM verification
+
+Install the optional verifier with `python -m pip install -r requirements-dkim.txt`
+in the environment you use to run Gatekeeper. Add `--verify-dkim` alongside
+`--assess` to check the original message bytes against public DKIM keys via DNS.
+The message stays local. DNS queries reveal the signing domain and key selector.
+
+`sender_domain_authentication` reports `authenticated` only for a valid,
+full-body RSA-SHA256 signature whose signing domain exactly matches the
+single From mailbox's domain. It reports `unverified` with a reason if that
+evidence is unavailable, and `not_checked` when the flag was omitted.
+Address approval, mailbox identity, and risk disposition are reported separately.

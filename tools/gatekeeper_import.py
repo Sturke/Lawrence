@@ -9,6 +9,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from memory.gatekeeper import DEFAULT_DATABASE, MessageStore
+from verification.dkim_authentication import authenticate_from_domain
 from verification.email_assessment import assess_email
 
 
@@ -29,14 +30,14 @@ def single_mailbox(message, header_name):
     return address
 
 
-def read_email(path, *, domains=None):
+def read_email(path, *, domains=None, verify_dkim=False):
     """Extract a plain-text email; reject missing sender/date or HTML-only mail.
 
     The Date header is the sender's date, not a verified delivery timestamp.
     Attachments are not imported. HTML is never rendered or fetched.
     """
-    with Path(path).open("rb") as source:
-        message = BytesParser(policy=policy.default).parse(source)
+    raw = Path(path).read_bytes()
+    message = BytesParser(policy=policy.default).parsebytes(raw)
     sender = str(message.get("From", "")).strip()
     if domains is not None:
         from_address = single_mailbox(message, "From")
@@ -67,6 +68,10 @@ def read_email(path, *, domains=None):
         body = part.get_content()
     except (LookupError, UnicodeError) as error:
         raise ValueError("Email body could not be decoded") from error
+    if verify_dkim and domains is not None:
+        domains["sender_domain_authentication"] = authenticate_from_domain(
+            raw, message, domains.get("from_domain")
+        )
     return {
         "sender": sender,
         "subject": str(message.get("Subject", "")),
@@ -93,13 +98,18 @@ def main(argv=None):
         "--approved-sender", action="append", default=[], metavar="ADDRESS",
         help="Exact approved address for this assessment (repeatable)",
     )
+    parser.add_argument("--verify-dkim", action="store_true", help="Verify DKIM using DNS")
     args = parser.parse_args(argv)
+    if args.verify_dkim and not args.assess:
+        parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
     try:
         # Validate the input before creating any persistent storage.
         domains = {} if args.assess else None
-        message = read_email(args.email.expanduser(), domains=domains)
+        message = read_email(
+            args.email.expanduser(), domains=domains, verify_dkim=args.verify_dkim
+        )
         database = args.database.expanduser()
         database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         store = MessageStore(database)
