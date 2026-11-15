@@ -185,7 +185,15 @@
   link mismatch. The new end-to-end test failed before the formatting change
   and passed after it. All 94 tests passed with
   `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace checks passed.
-- Started from clean `main` at `28d55e9`. The formatter, test, guide, and
-  status changes are uncommitted. The TreasuryDirect text rerun in Warp
-  showed both domain pairs beneath the review verdict. Next: review and
-  commit the diff. Bitwarden recognition is a separate follow-up.
+- The TreasuryDirect text rerun in Warp showed both domain pairs beneath
+  the review verdict. The report change was pushed as `bb9160c`.
+- New-device sign-in recognition now records the subject's stated platform
+  as unverified evidence and displays it in the text report. Started from
+  clean `main` at `bb9160c`. The assessment, formatter, test, and docs are
+  uncommitted. The new test failed before implementation and all 95 tests
+  passed afterward with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed.
+- Manual verification in Warp: the saved Bitwarden export was recognized as
+  an account sign-in notice with reported platform `macOS`. DKIM authenticated
+  `bitwarden.com` independently, and message risk was inconclusive.
+- Next: review and commit the new-device sign-in recognition changes.

@@ -23,7 +23,8 @@ RULES = (
 ACCOUNT_SIGN_IN_SUBJECT = re.compile(
     r"(?:your (?:[\w-]+ ){0,5}account was used to sign in to (?P<service>.+?)"
     r"(?: via (?P<sign_in_method>.+?))?"
-    r"|new sign[ -]in to your account)[.!]?",
+    r"|new sign[ -]in to your account"
+    r"|new device logged in from (?P<platform>[^\s.!](?:.*?[^\s.!])?))[.!]?",
     re.IGNORECASE,
 )
 

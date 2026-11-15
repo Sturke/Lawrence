@@ -409,3 +409,19 @@ def test_text_report_shows_each_link_domain_pair(tmp_path, capsys):
     assert "Message risk: Review required" in output
     assert "Displayed: example.com | Destination: click.example.net" in output
     assert "Displayed: example.org | Destination: click.example.net" in output
+
+
+def test_recognizes_new_device_sign_in_platform(tmp_path, capsys):
+    subject = "New Device Logged In From macOS"
+    record = assess(tmp_path, capsys, subject, "See account activity.")
+
+    (notice,) = record["recognized"]
+    assert notice["category"] == "account_sign_in_notice"
+    assert notice["details"] == {"platform": "macOS"}
+    assert notice["evidence"]["excerpt"] == subject
+    assert notice["evidence"]["verification_status"] == "unverified"
+    assert record["disposition"] == "inconclusive"
+
+    from verification.email_report import format_email_report
+
+    assert "Message: Account sign-in notice (reported platform: macOS)" in format_email_report(record)

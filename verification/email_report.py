@@ -17,6 +17,8 @@ def format_email_report(record):
             label += f' for {_terminal_text(details["service"])}'
         if details.get("sign_in_method"):
             label += f' via {_terminal_text(details["sign_in_method"])}'
+        if details.get("platform"):
+            label += f' (reported platform: {_terminal_text(details["platform"])})'
         notices.append(label)
 
     sender = record["sender_trust"]

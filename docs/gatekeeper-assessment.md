@@ -70,6 +70,11 @@ changed”, or “Your password has been changed” as complete subjects, ignori
 case and an optional final period or exclamation mark. It quotes the subject
 as unverified evidence and returns an empty `details` object.
 
+A subject such as “New Device Logged In From macOS” is also recognized as an
+account sign-in notice. The text after “From” is recorded as `platform` and
+shown as the reported platform in the text report. The subject remains
+unverified evidence.
+
 ## Phrase checks
 
 | Category | v0.1 signal |
