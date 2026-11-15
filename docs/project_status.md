@@ -16,11 +16,12 @@
   low-confidence findings. The JSON record reports version `0.2`.
   All 79 tests passed in Warp, including the domain mismatch and
   case-insensitive match tests. `git diff --check` passed.
-- Active milestone — [Gatekeeper Email Assessment v0.3](gatekeeper-assessment.md)
-  adds a local HTML link check. When a domain shown in a link label differs
-  from the HTTP or HTTPS destination hostname, Gatekeeper reports both as
-  unverified evidence in a low-confidence finding. The automated tests cover
-  both matching and mismatched domains. All 81 tests passed in Warp.
+- Completed milestone — [Gatekeeper Email Assessment v0.3](gatekeeper-assessment.md)
+  was committed as `c65d453` and pushed to GitHub’s `main` branch.
+  It flags differences between a domain shown in an HTML link label and
+  the HTTP or HTTPS destination hostname, recording both as unverified
+  evidence in a low-confidence finding. All 81 tests passed in Warp,
+  including the matching and mismatched link cases.
 - Files in this checkpoint: `tools/gatekeeper_import.py`, `verification/email_assessment.py`,
   `tests/test_gatekeeper_assessment.py`, and the assessment, import, architecture,
   roadmap, and project status documents.
