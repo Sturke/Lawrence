@@ -167,6 +167,12 @@
   credential request returned `review_required` and displayed its finding.
 - Release baseline: clean `main` at `1462106`. The full test suite passed
   all 93 tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
-  The release validation notes are uncommitted.
-- Next: review and commit these results, then prepare the saved-email 1.0
-  release notes and version update.
+  The release validation notes were committed as `f56d6c5` and pushed.
+- Gatekeeper 1.0 release is ready for review. The JSON assessment reports
+  version `1.0`, and the assessment guide describes the validated workflow
+  and its limits. Assessment logic and text report behavior are unchanged.
+- Started from clean `main` at `f56d6c5`. Version, tests, release notes,
+  and status updates are uncommitted. All 93 tests passed after the version
+  update with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed.
+- Next: review, commit, and push the 1.0 release change.

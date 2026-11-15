@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.11
+# Gatekeeper Email Assessment 1.0
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -6,6 +6,25 @@ import rules apply. Assessment reads the decoded subject and plain-text body.
 The `From` and `Date` headers are self-reported. Attachments are outside
 assessment coverage. When an HTML alternative is available, Gatekeeper compares
 domain names shown as link labels with their HTTP or HTTPS destination hostnames.
+
+## 1.0 release notes
+
+Gatekeeper 1.0 is the first release of the local saved-email workflow.
+Import a saved `.eml` with a plain-text body and choose the default JSON
+assessment or the readable terminal report. Gatekeeper recognizes supported
+account sign-in, password reset, and password change notices, preserves
+evidence for its findings, and reports which checks could run.
+
+Save exact address approvals in SQLite. With optional DKIM verification,
+the report can authenticate the claimed From domain for an individual message.
+Address approval, domain authentication, and risk remain separate.
+Domain authentication does not verify mailbox identity or the message's
+claims. An inconclusive risk result means risk is unknown. The workflow
+assesses saved files and takes no inbox actions.
+
+Release validation covered the saved Apple notice with and without DKIM and
+a synthetic credential request that required review. See
+[project status](project_status.md) for the results.
 
 ## Manual test with saved emails
 

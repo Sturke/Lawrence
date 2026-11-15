@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.11"
+    assert record["version"] == "1.0"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.11"
+    assert record["version"] == "1.0"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 

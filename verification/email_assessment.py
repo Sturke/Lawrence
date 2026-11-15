@@ -185,7 +185,7 @@ def assess_email(
         })
 
     return {
-        "version": "0.11",
+        "version": "1.0",
         "sender_domain_authentication": sender_domain_authentication or {
             "status": "not_checked",
             "reason": "dkim_verification_not_requested",
