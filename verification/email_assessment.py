@@ -92,6 +92,35 @@ class LinkDomainParser(HTMLParser):
             self.mismatches.append((displayed_domain, destination_domain.lower()))
 
 
+class HTMLBodyTextParser(HTMLParser):
+    """Collect text nodes without rendering or resolving resources."""
+
+    ignored_tags = {"head", "script", "style", "template"}
+    separators = {"br", "div", "p", "li", "tr", "td", "section", "hr"}
+
+    def __init__(self):
+        super().__init__()
+        self.parts = []
+        self.ignored = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.ignored_tags:
+            self.ignored.append(tag)
+        elif not self.ignored and tag in self.separators:
+            self.parts.append(" ")
+
+    def handle_endtag(self, tag):
+        if self.ignored:
+            if tag == self.ignored[-1]:
+                self.ignored.pop()
+        elif tag in self.separators:
+            self.parts.append(" ")
+
+    def handle_data(self, data):
+        if not self.ignored:
+            self.parts.append(data)
+
+
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
     claimed_address=None, approved_senders=(), sender_domain_authentication=None,
@@ -99,10 +128,22 @@ def assess_email(
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
-    phrase_fields = ("subject", "body") if plain_text_available else ("subject",)
+    phrase_fields = [("subject", message["subject"])]
+    if plain_text_available:
+        phrase_fields.append(("body", message["body"]))
+
+    html_phrase_check = {"status": "skipped", "reason": "plain_text_body_preferred"}
+    if not plain_text_available:
+        html_phrase_check = {"status": "skipped", "reason": "html_body_unavailable"}
+        if html_body is not None:
+            parser = HTMLBodyTextParser()
+            parser.feed(html_body)
+            parser.close()
+            phrase_fields.append(("html_body_text", "".join(parser.parts)))
+            html_phrase_check = {"status": "checked"}
     for category, pattern, reason in RULES:
-        for field in phrase_fields:
-            match = pattern.search(message[field])
+        for field, value in phrase_fields:
+            match = pattern.search(value)
             if match is None:
                 continue
             evidence = Evidence(
@@ -219,9 +260,11 @@ def assess_email(
             ),
             "reply_to_domains": reply_to_check,
             "html_link_domains": html_check,
+            "html_body_phrases": html_phrase_check,
         },
         "limitations": [
             "Phrase matching can miss risks or match benign text.",
+            "HTML body phrases use extracted text without evaluating CSS or rendering.",
             "The assessment checks the subject, plain-text body, when available, and available From and Reply-To domains.",
             "The HTML link check compares domain-only labels with HTTP or HTTPS destination hostnames without opening links.",
             "Sender identity and message claims were not verified.",

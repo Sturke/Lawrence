@@ -438,21 +438,29 @@ def test_recognizes_password_updated_confirmation(tmp_path, capsys):
     assert record["disposition"] == "inconclusive"
 
 
-def test_html_only_assesses_subject_and_links_without_body_phrases(tmp_path, capsys):
+def test_html_only_assesses_subject_links_and_body_phrases(tmp_path, capsys):
     source = tmp_path / "html-only.eml"
     source.write_text(
         "From: notices@example.com\n"
         "Date: Sun, 15 Nov 2026 10:00:00 -0600\n"
         "Subject: Reset your password\n"
         "Content-Type: text/html; charset=utf-8\n\n"
-        '<p>Verify your password.</p><a href="https://example.net/">example.com</a>',
+        '<head><title>Buy gift cards</title></head>'
+        '<style>Buy gift cards</style><script>Buy gift cards</script>'
+        '<p>Verify your <strong>password</strong>.</p>'
+        '<a href="https://example.net/">example.com</a>',
         encoding="utf-8",
     )
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--assess", "--database", str(database)])
     record = json.loads(capsys.readouterr().out)
     assert record["recognized"][0]["category"] == "password_reset_notice"
-    assert [finding["category"] for finding in record["findings"]] == ["link_domain_mismatch"]
+    phrase, link = record["findings"]
+    assert phrase["category"] == "credential_request"
+    assert phrase["evidence"]["field"] == "html_body_text"
+    assert phrase["evidence"]["excerpt"] == "Verify your password"
+    assert link["category"] == "link_domain_mismatch"
+    assert record["checks"]["html_body_phrases"] == {"status": "checked"}
     assert record["checks"]["plain_text_body"] == {
         "status": "skipped", "reason": "plain_text_body_unavailable",
     }

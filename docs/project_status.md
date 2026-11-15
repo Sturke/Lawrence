@@ -232,4 +232,14 @@
   report password reset and password change respectively. Both domains
   authenticated via DKIM, risk was inconclusive, and both reports showed
   the skipped plain-text body check.
-- Next: review and commit the subject recognition update.
+- The subject recognition update was pushed as `4568bd9`.
+- Follow-up from clean `main` at `4568bd9`: assess phrases in extracted HTML
+  text when the plain-text body is missing. The updated end-to-end test
+  failed before implementation and verifies credential evidence, skipped
+  script/style/head content, and continued link checks. All 100 tests passed
+  with `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- The assessment, report, test, and documentation changes are uncommitted.
+- Manual Warp reruns of the Stansberry and Instagram exports confirmed
+  that extracted HTML text was checked. Both retained their expected notice
+  labels and DKIM authentication, with inconclusive risk.
+- Next: review and commit the HTML phrase coverage update.

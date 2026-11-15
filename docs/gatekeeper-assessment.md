@@ -181,6 +181,9 @@ want the report to include a live DNS verification result. JSON remains the
 default and includes the full evidence and assessment limitations.
 
 
-For HTML-only mail, Gatekeeper still checks the subject and eligible HTML links.
-The JSON `checks.plain_text_body` entry and the text report show that the body
-phrase check was skipped. The stored plain-text body is empty.
+For HTML-only mail, Gatekeeper checks the subject, eligible links, and
+extracted HTML text. Text extraction skips head, script, style, and template
+content and does not render the email or evaluate CSS visibility. Phrase
+findings from that text use the evidence field `html_body_text`. JSON reports
+plain-text and HTML phrase coverage separately. The stored plain-text body
+is empty.

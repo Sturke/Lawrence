@@ -58,5 +58,8 @@ def format_email_report(record):
             destination = _terminal_text(evidence["destination_domain"])
             lines.append(f"    Displayed: {displayed} | Destination: {destination}")
     if record["checks"]["plain_text_body"]["status"] == "skipped":
-        lines.append("Coverage: Plain-text body check skipped (no plain-text body).")
+        if record["checks"]["html_body_phrases"]["status"] == "checked":
+            lines.append("Coverage: Checked extracted HTML text (no plain-text body).")
+        else:
+            lines.append("Coverage: Body phrase check skipped (no usable body text).")
     return "\n".join(lines)
