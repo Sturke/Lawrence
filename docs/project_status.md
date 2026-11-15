@@ -135,10 +135,11 @@
 - Manual v0.10 verification in Warp: the saved Apple export matched its
   SQLite approval without a per-run option. Sender status was `unverified`
   and risk disposition was `inconclusive`.
-- Active milestone — Gatekeeper v0.11 adds opt-in DKIM verification against
-  DNS keys, with exact From-domain matching and full-body signatures.
+- Completed milestone — Gatekeeper v0.11 was committed as `c5d5ddb` and
+  pushed to `main`. It adds opt-in DKIM verification against DNS keys,
+  with exact From-domain matching and full-body signatures.
 - Started at `db25c1e` on `main`, with the v0.10 status closeout already
-  pending. That edit is preserved. The v0.11 changes are uncommitted.
+  pending. The v0.11 commit includes that closeout.
 - Standalone Warp probe verified a signature on the saved Apple export
   with signing domain and From domain both `email.apple.com`.
 - The CLI test first failed because `--verify-dkim` was absent. After
@@ -148,4 +149,5 @@
   `email.apple.com` via DKIM for the saved Apple export. The per-run approved
   address matched, mailbox identity stayed unverified, and the risk verdict
   was inconclusive with no findings.
-- Next: review and commit the v0.11 changes.
+- Next: make the assessment readable at a glance, with separate results
+  for address approval, domain authentication, and message risk.
