@@ -10,6 +10,12 @@
   assesses plain-text email and emits JSON with the stored message ID,
   low-confidence findings, source excerpts, and coverage limits. A message
   with no matching phrases is inconclusive.
+- Active milestone — [Gatekeeper Email Assessment v0.2](gatekeeper-assessment.md)
+  compares the `From` and `Reply-To` domains and records differences as
+  low-confidence findings. The JSON record reports version `0.2`.
+  Warp verification passed all 79 tests, including the mismatched-domain
+  and case-insensitive matching tests. `git diff --check` passed.
+  The changes are ready for diff review before committing.
 - Files in this checkpoint: `tools/gatekeeper_import.py`, `verification/email_assessment.py`,
   `tests/test_gatekeeper_assessment.py`, and the assessment, import, architecture,
   roadmap, and project status documents.

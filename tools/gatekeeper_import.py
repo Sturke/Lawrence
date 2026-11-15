@@ -12,7 +12,24 @@ from memory.gatekeeper import MessageStore
 from verification.email_assessment import assess_email
 
 
-def read_email(path):
+def single_address_domain(message, header_name):
+    """Return the domain when the header has one unambiguous mailbox."""
+    headers = message.get_all(header_name, [])
+    if len(headers) != 1:
+        return None
+
+    header = headers[0]
+    if header.defects or len(header.addresses) != 1:
+        return None
+
+    address = header.addresses[0]
+    if not address.username or not address.domain:
+        return None
+
+    return address.domain.casefold()
+
+
+def read_email(path, *, domains=None):
     """Extract a plain-text email; reject missing sender/date or HTML-only mail.
 
     The Date header is the sender's date, not a verified delivery timestamp.
@@ -21,6 +38,9 @@ def read_email(path):
     with Path(path).open("rb") as source:
         message = BytesParser(policy=policy.default).parse(source)
     sender = str(message.get("From", "")).strip()
+    if domains is not None:
+        domains["from_domain"] = single_address_domain(message, "From")
+        domains["reply_to_domain"] = single_address_domain(message, "Reply-To")
     if not sender:
         raise ValueError("Email must have a From header")
     try:
@@ -61,14 +81,15 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         # Validate the input before creating any persistent storage.
-        message = read_email(args.email.expanduser())
+        domains = {} if args.assess else None
+        message = read_email(args.email.expanduser(), domains=domains)
         database = args.database.expanduser()
         database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         message_id = MessageStore(database).save_message(**message)
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"Import failed: {error}\n")
     if args.assess:
-        print(json.dumps(assess_email(message_id, message)))
+        print(json.dumps(assess_email(message_id, message, **domains)))
     else:
         print(f"Stored message {message_id} in {database}")
 

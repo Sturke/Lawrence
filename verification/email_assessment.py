@@ -19,7 +19,7 @@ RULES = (
 )
 
 
-def assess_email(message_id, message):
+def assess_email(message_id, message, *, from_domain=None, reply_to_domain=None):
     """Return a JSON-ready assessment without external verification."""
     findings = []
     for category, pattern, reason in RULES:
@@ -45,19 +45,32 @@ def assess_email(message_id, message):
             })
             break
 
+    if from_domain and reply_to_domain and from_domain != reply_to_domain:
+        findings.append({
+            "category": "reply_to_domain_mismatch",
+            "confidence": "low",
+            "reason": "The Reply-To domain differs from the From domain.",
+            "evidence": {
+                "from_domain": from_domain,
+                "reply_to_domain": reply_to_domain,
+                "source_type": "local_email",
+                "verification_status": "unverified",
+            },
+        })
+
     return {
-        "version": "0.1",
+        "version": "0.2",
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",
         "confidence": "low",
         "reason": (
-            "Inspect the quoted phrases and verify requests through a trusted channel."
-            if findings else "No supported phrases matched. Message risk remains unknown."
+            "Review the findings and verify requests through a trusted channel."
+            if findings else "No supported signals were found. Message risk remains unknown."
         ),
         "findings": findings,
         "limitations": [
             "Phrase matching can miss risks or match benign text.",
-            "Only the subject and plain-text body were evaluated.",
+            "The assessment checks the subject, plain-text body, and available From and Reply-To domains.",
             "Sender identity and message claims were not verified.",
         ],
     }
