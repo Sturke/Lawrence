@@ -176,3 +176,16 @@
   `.venv/bin/python -m pytest -q -p no:cacheprovider`. At closeout, `main`
   and `origin/main` pointed to `dd8352b` and the working tree was clean
   before this documentation update.
+- The 1.0 checkpoint was closed in `28d55e9`.
+- Follow-up from real saved emails: the Bitwarden export authenticated
+  its domain but its new-device sign-in subject was unrecognized. The
+  TreasuryDirect export yielded two link mismatch findings whose domain
+  pairs were visible in JSON only.
+- The text report now prints the displayed domain and destination for each
+  link mismatch. The new end-to-end test failed before the formatting change
+  and passed after it. All 94 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace checks passed.
+- Started from clean `main` at `28d55e9`. The formatter, test, guide, and
+  status changes are uncommitted. The TreasuryDirect text rerun in Warp
+  showed both domain pairs beneath the review verdict. Next: review and
+  commit the diff. Bitwarden recognition is a separate follow-up.

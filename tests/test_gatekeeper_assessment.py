@@ -385,3 +385,27 @@ def test_text_report_separates_approval_from_domain_authentication(tmp_path, cap
     assert "Sender domain: Unverified (DKIM check not requested)" in output
     assert "Message risk: Review required" in output
     assert "Credential request" in output
+
+
+def test_text_report_shows_each_link_domain_pair(tmp_path, capsys):
+    from email.message import EmailMessage
+
+    message = EmailMessage()
+    message["From"] = "test@example.com"
+    message["Date"] = "Sun, 15 Nov 2026 10:00:00 -0600"
+    message.set_content("Meeting information.")
+    message.add_alternative(
+        '<a href="https://click.example.net/one">example.com</a>'
+        '<a href="https://click.example.net/two">example.org</a>',
+        subtype="html",
+    )
+    source = tmp_path / "links.eml"
+    source.write_bytes(message.as_bytes())
+    main([
+        str(source), "--assess", "--format", "text",
+        "--database", str(tmp_path / "messages.sqlite3"),
+    ])
+    output = capsys.readouterr().out
+    assert "Message risk: Review required" in output
+    assert "Displayed: example.com | Destination: click.example.net" in output
+    assert "Displayed: example.org | Destination: click.example.net" in output

@@ -169,6 +169,7 @@ Address approval, mailbox identity, and risk disposition are reported separately
 
 Add `--format text` with `--assess` to see the recognized message type,
 address approval, sender domain authentication, and message risk on separate
-lines. Risk findings appear under the verdict. Add `--verify-dkim` when you
+lines. Risk findings appear under the verdict. For each link domain mismatch,
+the report shows the displayed domain and the destination hostname. Add `--verify-dkim` when you
 want the report to include a live DNS verification result. JSON remains the
 default and includes the full evidence and assessment limitations.
