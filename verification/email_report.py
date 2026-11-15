@@ -1,0 +1,53 @@
+"""Readable terminal output for a Gatekeeper assessment."""
+
+
+def _terminal_text(value):
+    """Escape nonprinting characters from message-derived fields."""
+    return "".join(char if char.isprintable() else repr(char)[1:-1] for char in value)
+
+
+def format_email_report(record):
+    notices = []
+    for notice in record["recognized"]:
+        label = notice["category"].replace("_", " ").capitalize()
+        if notice["category"] == "account_sign_in_notice":
+            label = "Account sign-in notice"
+        details = notice["details"]
+        if details.get("service"):
+            label += f' for {_terminal_text(details["service"])}'
+        if details.get("sign_in_method"):
+            label += f' via {_terminal_text(details["sign_in_method"])}'
+        notices.append(label)
+
+    sender = record["sender_trust"]
+    claimed = sender["claimed_address"]
+    approval = "Claimed address unavailable"
+    if claimed:
+        prefix = "Matches" if sender["approved_address_match"] else "No approval for"
+        approval = f"{prefix} {_terminal_text(claimed)}"
+
+    authentication = record["sender_domain_authentication"]
+    if authentication["status"] == "authenticated":
+        domain = _terminal_text(authentication["signing_domain"])
+        domain_result = f"{domain} authenticated via DKIM"
+    else:
+        reason = {
+            "dkim_verification_not_requested": "DKIM check not requested",
+            "from_domain_unavailable": "From domain unavailable",
+            "no_dkim_signature": "No DKIM signature",
+            "dkim_verifier_unavailable": "DKIM verifier unavailable",
+            "no_valid_matching_signature": "No valid matching DKIM signature",
+        }.get(authentication["reason"], "Authentication evidence unavailable")
+        domain_result = f"Unverified ({reason})"
+
+    risk = record["disposition"].replace("_", " ").capitalize()
+    lines = [
+        f"Message: {', '.join(notices) or 'Type not recognized'}",
+        f"Address approval: {approval}",
+        f"Sender domain: {domain_result}",
+        f"Message risk: {risk} — {record['reason']}",
+    ]
+    for finding in record["findings"]:
+        label = finding["category"].replace("_", " ").capitalize()
+        lines.append(f"  - {label}: {finding['reason']}")
+    return "\n".join(lines)

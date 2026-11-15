@@ -149,5 +149,15 @@
   `email.apple.com` via DKIM for the saved Apple export. The per-run approved
   address matched, mailbox identity stayed unverified, and the risk verdict
   was inconclusive with no findings.
-- Next: make the assessment readable at a glance, with separate results
-  for address approval, domain authentication, and message risk.
+- The v0.11 checkpoint was closed in `d2ed5df`.
+- Active milestone: add an opt-in text report with recognition, address
+  approval, domain authentication, and risk shown separately.
+- Started from clean `main` at `d2ed5df`. Importer, new formatter, tests,
+  assessment guide, and status updates are uncommitted.
+- The focused test initially failed because the format option was absent.
+  After implementation, `.venv/bin/python -m pytest -q -p no:cacheprovider`
+  passed all 93 tests. `git diff --check` passed.
+- Manual verification in Warp: the text report recognized the iCloud sign-in
+  notice, showed the approved address match, authenticated `email.apple.com`
+  via DKIM, and reported inconclusive message risk on its own line.
+- Next: review and commit the text report changes.

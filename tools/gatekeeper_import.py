@@ -11,6 +11,7 @@ from pathlib import Path
 from memory.gatekeeper import DEFAULT_DATABASE, MessageStore
 from verification.dkim_authentication import authenticate_from_domain
 from verification.email_assessment import assess_email
+from verification.email_report import format_email_report
 
 
 def single_mailbox(message, header_name):
@@ -99,7 +100,12 @@ def main(argv=None):
         help="Exact approved address for this assessment (repeatable)",
     )
     parser.add_argument("--verify-dkim", action="store_true", help="Verify DKIM using DNS")
+    parser.add_argument(
+        "--format", choices=("json", "text"), help="Assessment output format (default: json)",
+    )
     args = parser.parse_args(argv)
+    if args.format is not None and not args.assess:
+        parser.error("--format requires --assess")
     if args.verify_dkim and not args.assess:
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
@@ -123,7 +129,7 @@ def main(argv=None):
         record = assess_email(
             message_id, message, approved_senders=approved_senders, **domains
         )
-        print(json.dumps(record))
+        print(format_email_report(record) if args.format == "text" else json.dumps(record))
     else:
         print(f"Stored message {message_id} in {database}")
 

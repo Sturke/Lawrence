@@ -364,3 +364,24 @@ def test_opt_in_reports_domain_authentication_separately(tmp_path, capsys, monke
         assert record["sender_trust"]["approved_address_match"]
         assert record["sender_trust"]["status"] == "unverified"
         assert record["disposition"] == "review_required"
+
+
+def test_text_report_separates_approval_from_domain_authentication(tmp_path, capsys):
+    source = tmp_path / "notice.eml"
+    source.write_text(
+        "From: Notices <notices@example.com>\n"
+        "Date: Sat, 14 Nov 2026 10:00:00 -0600\n"
+        "Subject: New sign-in to your account\n\nVerify your password.\n",
+        encoding="utf-8",
+    )
+    main([
+        str(source), "--assess", "--format", "text",
+        "--database", str(tmp_path / "messages.sqlite3"),
+        "--approved-sender", "notices@example.com",
+    ])
+    output = capsys.readouterr().out
+    assert "Message: Account sign-in notice" in output
+    assert "Address approval: Matches notices@example.com" in output
+    assert "Sender domain: Unverified (DKIM check not requested)" in output
+    assert "Message risk: Review required" in output
+    assert "Credential request" in output
