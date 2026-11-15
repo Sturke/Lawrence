@@ -44,6 +44,7 @@
 
 - [x] Gatekeeper message persistence and local saved-email import
 - [x] Evidence & Verification Foundation v0.1 — separate Evidence and VerificationResult models
+- [x] [Gatekeeper Email Assessment v0.1](gatekeeper-assessment.md) — local plain-text review records for bounded credential and payment signals
 - [ ] Fact-checking using the shared evidence/verification foundation
 - [ ] Threat/deception detection using that foundation (spam/phishing included)
 

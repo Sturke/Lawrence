@@ -86,7 +86,7 @@ Butler is currently organized into separate components with distinct responsibil
 
 ## Responsibility Boundaries — October 4, 2026
 
-- **Gatekeeper:** the intended boundary for incoming information, permissions, and appropriate actions. Currently only standalone message storage and local `.eml` import exist; live inbox access, classification, and action policy are deferred.
+- **Gatekeeper:** the intended boundary for incoming information, permissions, and appropriate actions. Standalone message storage, local `.eml` import, and [bounded email assessment](gatekeeper-assessment.md) are available. Live inbox access and action policy are deferred.
 - **Provenance:** records where information came from. Source identity alone does not establish truth.
 - **Evidence/Verification:** distinguishes received information from an evaluation of a claim and the reasons for trusting or disputing it.
 - **Retrieval:** selects relevant, currently usable information. Relevance and evidentiary strength are separate dimensions.
@@ -94,7 +94,7 @@ Butler is currently organized into separate components with distinct responsibil
 
 The conceptual direction is `Question/Input → Gatekeeper → Retrieval → Evidence/Provenance → Verification → Reasoning → Answer/Action`. This is an architectural guide, not an implemented end-to-end pipeline.
 
-Future fact-checking and threat/deception detection (including spam and phishing) should be sibling consumers of the same evidence and verification foundation. An email claiming an account is suspended establishes that someone made the claim; it does not establish that the account is suspended. Automatic web research, source-quality scoring, detection, and verification-result persistence remain deferred.
+Future fact-checking and threat/deception detection (including spam and phishing) should be sibling consumers of the same evidence and verification foundation. An email claiming an account is suspended establishes that someone made the claim; it does not establish that the account is suspended. Automatic web research, source-quality scoring, broader threat detection, and verification-result persistence remain deferred.
 
 ## Evidence & Verification Foundation v0.1
 

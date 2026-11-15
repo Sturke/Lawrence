@@ -1,6 +1,7 @@
 """Import one saved email without connecting to an inbox."""
 
 import argparse
+import json
 import sqlite3
 from email import policy
 from email.parser import BytesParser
@@ -8,6 +9,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 from memory.gatekeeper import MessageStore
+from verification.email_assessment import assess_email
 
 
 def read_email(path):
@@ -55,6 +57,7 @@ def main(argv=None):
         default=Path("~/Library/Application Support/Butler/gatekeeper.sqlite3"),
         help="SQLite file (default: ~/Library/Application Support/Butler/gatekeeper.sqlite3)",
     )
+    parser.add_argument("--assess", action="store_true", help="Emit a JSON review record")
     args = parser.parse_args(argv)
     try:
         # Validate the input before creating any persistent storage.
@@ -64,7 +67,10 @@ def main(argv=None):
         message_id = MessageStore(database).save_message(**message)
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"Import failed: {error}\n")
-    print(f"Stored message {message_id} in {database}")
+    if args.assess:
+        print(json.dumps(assess_email(message_id, message)))
+    else:
+        print(f"Stored message {message_id} in {database}")
 
 
 if __name__ == "__main__":

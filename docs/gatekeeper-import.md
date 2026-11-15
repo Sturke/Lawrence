@@ -1,7 +1,8 @@
 # Importing a saved email
 
 Gatekeeper can import one local `.eml` file into its existing message store.
-This does not connect to an inbox, send email, or classify messages.
+Add `--assess` for a [JSON review record](gatekeeper-assessment.md).
+The default command only imports the message.
 `tests/fixtures/sample.eml` contains a fictional message using example.com
 addresses, suitable for repeatable tests and manual demonstrations.
 
