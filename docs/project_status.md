@@ -150,14 +150,16 @@
   address matched, mailbox identity stayed unverified, and the risk verdict
   was inconclusive with no findings.
 - The v0.11 checkpoint was closed in `d2ed5df`.
-- Active milestone: add an opt-in text report with recognition, address
-  approval, domain authentication, and risk shown separately.
-- Started from clean `main` at `d2ed5df`. Importer, new formatter, tests,
-  assessment guide, and status updates are uncommitted.
+- Completed milestone — The opt-in text report was committed as `ee0817e`
+  and pushed to `main`. It shows recognition, address approval, domain
+  authentication, and risk separately.
+- Started from clean `main` at `d2ed5df`. At closeout, `main` and
+  `origin/main` pointed to `ee0817e`.
 - The focused test initially failed because the format option was absent.
   After implementation, `.venv/bin/python -m pytest -q -p no:cacheprovider`
   passed all 93 tests. `git diff --check` passed.
 - Manual verification in Warp: the text report recognized the iCloud sign-in
   notice, showed the approved address match, authenticated `email.apple.com`
   via DKIM, and reported inconclusive message risk on its own line.
-- Next: review and commit the text report changes.
+- Next: validate the saved-email workflow for 1.0 with authenticated,
+  unverified, and review-required messages.
