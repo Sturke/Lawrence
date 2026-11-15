@@ -193,3 +193,12 @@ is empty.
 The text coverage line says whether the Reply-To domains matched, differed,
 or could not be compared. It also shows the number of eligible HTML links
 compared, or distinguishes unavailable HTML from HTML with no eligible links.
+
+## Assess a folder of saved emails
+
+Use `--folder DIRECTORY` in place of a single email path and keep
+`--assess`. Gatekeeper processes regular `.eml` files (case-insensitive)
+directly inside the folder in filename order. One failed import is reported
+alongside the other results. Text mode prints per-file reports and a summary.
+JSON mode prints a single object containing `results` and `summary`.
+Check the failure count even when the batch command completes successfully.

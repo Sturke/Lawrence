@@ -522,3 +522,20 @@ def test_text_coverage_distinguishes_matching_domains_and_links():
         "Coverage: Reply-To comparison skipped (usable domains unavailable); "
         "HTML links skipped (no eligible links)."
     ) in format_email_report(record)
+
+
+def test_folder_assessment_continues_after_invalid_email(tmp_path, capsys):
+    folder = tmp_path / "mail"
+    folder.mkdir()
+    headers = "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+    (folder / "01.eml").write_text(headers + "Subject: Reset Password\n\nHello.")
+    (folder / "02.eml").write_text("Invalid email")
+    (folder / "03.EML").write_text(headers + "Subject: Notice\n\nVerify your password.")
+    (folder / "notes.txt").write_text("Not email.")
+    main(["--folder", str(folder), "--assess", "--database", str(tmp_path / "batch.db")])
+    batch = json.loads(capsys.readouterr().out)
+    first, failed, last = batch["results"]
+    assert first["assessment"]["recognized"][0]["category"] == "password_reset_notice"
+    assert failed["file"] == "02.eml" and "error" in failed
+    assert last["assessment"]["disposition"] == "review_required"
+    assert batch["summary"] == {"assessed": 2, "review_required": 1, "import_failures": 1}

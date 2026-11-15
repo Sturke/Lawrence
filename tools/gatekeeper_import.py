@@ -91,9 +91,68 @@ def import_email(path, store):
     return store.save_message(**read_email(path))
 
 
+def import_one(path, args):
+    domains = {} if args.assess else None
+    message = read_email(path, domains=domains, verify_dkim=args.verify_dkim)
+    database = args.database.expanduser()
+    database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    store = MessageStore(database)
+    if args.assess:
+        approved_senders = set(args.approved_sender)
+        approved_senders.update(row["address"] for row in store.list_approved_senders())
+    message_id = store.save_message(**message)
+    record = None
+    if args.assess:
+        record = assess_email(
+            message_id, message, approved_senders=approved_senders, **domains
+        )
+    return message_id, record
+
+
+def assess_folder(args):
+    folder = args.folder.expanduser()
+    paths = sorted(
+        path for path in folder.iterdir()
+        if path.suffix.lower() == ".eml" and not path.is_symlink() and path.is_file()
+    )
+    results = []
+    summary = {"assessed": 0, "review_required": 0, "import_failures": 0}
+    for path in paths:
+        result = {"file": path.name}
+        try:
+            _, record = import_one(path, args)
+        except (OSError, ValueError, sqlite3.Error) as error:
+            result["error"] = str(error)
+            summary["import_failures"] += 1
+        else:
+            result["assessment"] = record
+            summary["assessed"] += 1
+            if record["disposition"] == "review_required":
+                summary["review_required"] += 1
+        results.append(result)
+
+    if args.format != "text":
+        print(json.dumps({"results": results, "summary": summary}))
+        return
+    for result in results:
+        print(f'=== {json.dumps(result["file"])} ===')
+        if "error" in result:
+            print(f'Import failed: {json.dumps(result["error"])}')
+        else:
+            print(format_email_report(result["assessment"]))
+        print()
+    print(
+        f'Batch summary: {summary["assessed"]} assessed · '
+        f'{summary["review_required"]} require review · '
+        f'{summary["import_failures"]} import failures'
+    )
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("email", type=Path, help="Path to a saved .eml file")
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
+    inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
     parser.add_argument(
         "--database", type=Path,
         default=DEFAULT_DATABASE,
@@ -115,29 +174,23 @@ def main(argv=None):
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.folder is not None:
+        if not args.assess:
+            parser.error("--folder requires --assess")
+        try:
+            assess_folder(args)
+        except OSError as error:
+            parser.exit(1, f"Folder assessment failed: {error}\n")
+        return
+
     try:
-        # Validate the input before creating any persistent storage.
-        domains = {} if args.assess else None
-        message = read_email(
-            args.email.expanduser(), domains=domains, verify_dkim=args.verify_dkim
-        )
-        database = args.database.expanduser()
-        database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        store = MessageStore(database)
-        if args.assess:
-            approved_senders = set(args.approved_sender)
-            approved_senders.update(row["address"] for row in store.list_approved_senders())
-        message_id = store.save_message(**message)
+        message_id, record = import_one(args.email.expanduser(), args)
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"Import failed: {error}\n")
-    if args.assess:
-        record = assess_email(
-            message_id, message, approved_senders=approved_senders, **domains
-        )
+    if record is not None:
         print(format_email_report(record) if args.format == "text" else json.dumps(record))
     else:
-        print(f"Stored message {message_id} in {database}")
-
+        print(f"Stored message {message_id} in {args.database.expanduser()}")
 
 if __name__ == "__main__":
     main()

@@ -257,5 +257,16 @@
   Reply-To match, mismatch, or skip and the HTML link count or skip reason.
   Both focused tests failed before the change. Afterward, all 101 tests
   passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`, and
-  `git diff --check` passed. Formatter, tests, and docs are uncommitted.
-- Next: review and commit the text coverage display.
+  `git diff --check` passed. The text coverage display was pushed as
+  `0dd3e38` and verified on the TreasuryDirect export.
+- Warp shell-loop batch baseline: 12 assessed, two required review, and
+  zero import failures with DKIM off.
+- From clean `main` at `0dd3e38`, added built-in folder assessment.
+  The new test failed before the option existed and now verifies a
+  recognized reset, an invalid file, and a subsequent review finding.
+  All 102 tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Importer, tests, and docs are uncommitted.
+- Manual verification in Warp: the built-in folder command matched the
+  shell-loop baseline with DKIM off. It assessed 12 emails, flagged two for
+  review, and reported zero import failures.
+- Next: review and commit the folder assessment changes.
