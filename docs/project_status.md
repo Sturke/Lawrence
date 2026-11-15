@@ -5,7 +5,7 @@
 - Completed milestone — Improved Retrieval v1B was committed as `44ec2a1`
   (`Complete bounded Improved Retrieval v1B`). At startup, `main` matched the
   local `origin/main` reference and the working tree was clean.
-- Active milestone — [Gatekeeper Email Assessment v0.1](gatekeeper-assessment.md).
+- Completed milestone — [Gatekeeper Email Assessment v0.1](gatekeeper-assessment.md) was committed as `8718014` and pushed to GitHub’s `main` branch.
   The local implementation is verified and reviewed. The opt-in importer
   assesses plain-text email and emits JSON with the stored message ID,
   low-confidence findings, source excerpts, and coverage limits. A message
@@ -25,6 +25,9 @@
 - Final `.venv/bin/python -m pytest -q` with the pinned pytest 9.1.1: 77 passed.
   Burke independently confirmed 77 passing tests in Warp after activating
   Butler’s virtual environment. Tests use temporary SQLite stores. `git diff --check` passed.
+- Manual verification in Warp — A Gmail export and an Apple Mail export both imported successfully as local `.eml` files. Both assessments returned
+  `inconclusive` with no matching phrases. The automated acceptance tests
+  cover the `review_required` outcome.
 - Broader detection, sender authentication, inbox access, and autonomous action
   remain outside this increment. Master-document scenarios were not validated.
 
