@@ -66,8 +66,9 @@ optional final period or exclamation mark. It quotes the subject as unverified
 evidence and returns an empty `details` object.
 
 `password_change_notice` matches “Password changed”, “Your password was
-changed”, or “Your password has been changed” as complete subjects, ignoring
-case and an optional final period or exclamation mark. It quotes the subject
+changed”, “Your password has been changed”, or “Your password has been
+updated” as complete subjects, ignoring case and an optional final period
+or exclamation mark. It quotes the subject
 as unverified evidence and returns an empty `details` object.
 
 A subject such as “New Device Logged In From macOS” is also recognized as an

@@ -34,7 +34,7 @@ PASSWORD_RESET_SUBJECT = re.compile(
 )
 
 PASSWORD_CHANGE_SUBJECT = re.compile(
-    r"(?:your password (?:was|has been) changed|password changed)[.!]?",
+    r"(?:your password (?:was|has been) changed|password changed|your password has been updated)[.!]?",
     re.IGNORECASE,
 )
 

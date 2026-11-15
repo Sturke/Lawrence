@@ -196,4 +196,16 @@
 - Manual verification in Warp: the saved Bitwarden export was recognized as
   an account sign-in notice with reported platform `macOS`. DKIM authenticated
   `bitwarden.com` independently, and message risk was inconclusive.
-- Next: review and commit the new-device sign-in recognition changes.
+- New-device sign-in recognition was pushed as `4a4ff03`.
+- Real-email checks in Warp: the Jersey Mike’s and NPR reset notices were
+  recognized and their domains authenticated via DKIM. The NPR password
+  change notice authenticated via DKIM but its subject was unrecognized.
+  Two other exports stopped at import because they lacked a plain-text body.
+- Follow-up from clean `main` at `4a4ff03`: added recognition for “Your
+  password has been updated”. The new regression test failed before the
+  change. All 96 tests passed afterward with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: the NPR export now reports a password change
+  notice, authenticates `npr.org` via DKIM, and reports inconclusive risk.
+- Next: review and commit the assessment, test, guide, and status changes.
+  HTML-only import is a separate follow-up.

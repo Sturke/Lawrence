@@ -425,3 +425,14 @@ def test_recognizes_new_device_sign_in_platform(tmp_path, capsys):
     from verification.email_report import format_email_report
 
     assert "Message: Account sign-in notice (reported platform: macOS)" in format_email_report(record)
+
+
+def test_recognizes_password_updated_confirmation(tmp_path, capsys):
+    subject = "Your password has been updated"
+    record = assess(tmp_path, capsys, subject, "Your account settings were updated.")
+
+    (notice,) = record["recognized"]
+    assert notice["category"] == "password_change_notice"
+    assert notice["evidence"]["excerpt"] == subject
+    assert notice["evidence"]["verification_status"] == "unverified"
+    assert record["disposition"] == "inconclusive"
