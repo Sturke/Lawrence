@@ -277,4 +277,16 @@
 - Manual verification in Warp: the review filter displayed only the two
   review reports and retained the full batch count of 12 assessed, two
   requiring review, and zero import failures. DKIM was off.
-- Next: review and commit the review-only folder filter.
+- The review-only filter was pushed as `3df21ef`. A DKIM-enabled Warp
+  rerun also assessed 12 messages with two requiring review and no import
+  failures. The MissionSquare domain authenticated and its subdomain mismatch
+  remained visible. TreasuryDirect had no valid matching DKIM signature.
+- Follow-up from clean `main` at `3df21ef`: label destination subdomains
+  in the text report. The regression failed before the change and covers
+  a genuine subdomain and a similarly spelled unrelated domain. All 102
+  tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`,
+  and `git diff --check` passed. Formatter, test, and docs are uncommitted.
+- Manual Warp verification: the DKIM-enabled report labeled the
+  MissionSquare destination as a subdomain and kept both messages in review.
+  The batch showed 12 assessed, two requiring review, and zero import failures.
+- Next: review and commit the subdomain label.

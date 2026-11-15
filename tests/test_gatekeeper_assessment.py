@@ -404,7 +404,9 @@ def test_text_report_shows_each_link_domain_pair(tmp_path, capsys):
     message.set_content("Meeting information.")
     message.add_alternative(
         '<a href="https://click.example.net/one">example.com</a>'
-        '<a href="https://click.example.net/two">example.org</a>',
+        '<a href="https://click.example.net/two">example.org</a>'
+        '<a href="https://mail.example.com/three">example.com</a>'
+        '<a href="https://notexample.com/four">example.com</a>',
         subtype="html",
     )
     source = tmp_path / "links.eml"
@@ -417,6 +419,9 @@ def test_text_report_shows_each_link_domain_pair(tmp_path, capsys):
     assert "Message risk: Review required" in output
     assert "Displayed: example.com | Destination: click.example.net" in output
     assert "Displayed: example.org | Destination: click.example.net" in output
+    assert "Destination: mail.example.com (subdomain of displayed domain)" in output
+    assert "Destination: notexample.com" in output
+    assert output.count("(subdomain of displayed domain)") == 1
 
 
 def test_recognizes_new_device_sign_in_platform(tmp_path, capsys):

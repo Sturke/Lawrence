@@ -63,6 +63,8 @@ def format_email_report(record):
         if finding["category"] == "link_domain_mismatch":
             displayed = _terminal_text(evidence["displayed_domain"])
             destination = _terminal_text(evidence["destination_domain"])
+            if evidence["destination_domain"].endswith("." + evidence["displayed_domain"]):
+                destination += " (subdomain of displayed domain)"
             lines.append(f"    Displayed: {displayed} | Destination: {destination}")
         elif finding["category"] == "reply_to_domain_mismatch":
             from_domain = _terminal_text(evidence["from_domain"])
