@@ -252,5 +252,10 @@
   domains beneath a Reply-To mismatch finding. The synthetic saved-email
   regression failed before the formatter update. Afterward, all 100 tests
   passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`, and
+  `git diff --check` passed. Reply-To evidence display was pushed as `01e702e`.
+- Follow-up from clean `main` at `01e702e`: the text coverage line reports
+  Reply-To match, mismatch, or skip and the HTML link count or skip reason.
+  Both focused tests failed before the change. Afterward, all 101 tests
+  passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`, and
   `git diff --check` passed. Formatter, tests, and docs are uncommitted.
-- Next: review and commit the Reply-To evidence display.
+- Next: review and commit the text coverage display.

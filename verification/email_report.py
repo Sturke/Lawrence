@@ -72,6 +72,24 @@ def format_email_report(record):
             source = PHRASE_SOURCES[evidence["field"]]
             excerpt = _terminal_text(evidence["excerpt"])
             lines.append(f"    Source: {source} | Matched: {excerpt}")
+    checks = record["checks"]
+    if checks["reply_to_domains"]["status"] == "skipped":
+        reply_coverage = "Reply-To comparison skipped (usable domains unavailable)"
+    elif any(finding["category"] == "reply_to_domain_mismatch" for finding in record["findings"]):
+        reply_coverage = "Reply-To domains differ"
+    else:
+        reply_coverage = "Reply-To domains match"
+
+    link_check = checks["html_link_domains"]
+    if link_check["status"] == "compared":
+        link_coverage = f'HTML links compared: {link_check["links_compared"]}'
+    else:
+        reason = {
+            "html_body_unavailable": "HTML unavailable",
+            "no_eligible_links": "no eligible links",
+        }[link_check["reason"]]
+        link_coverage = f"HTML links skipped ({reason})"
+    lines.append(f"Coverage: {reply_coverage}; {link_coverage}.")
     if record["checks"]["plain_text_body"]["status"] == "skipped":
         if record["checks"]["html_body_phrases"]["status"] == "checked":
             lines.append("Coverage: Checked extracted HTML text (no plain-text body).")

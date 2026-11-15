@@ -189,3 +189,7 @@ content and does not render the email or evaluate CSS visibility. Phrase
 findings from that text use the evidence field `html_body_text`. JSON reports
 plain-text and HTML phrase coverage separately. The stored plain-text body
 is empty.
+
+The text coverage line says whether the Reply-To domains matched, differed,
+or could not be compared. It also shows the number of eligible HTML links
+compared, or distinguishes unavailable HTML from HTML with no eligible links.

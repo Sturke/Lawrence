@@ -76,6 +76,7 @@ def test_reply_to_domain_mismatch_requires_review(tmp_path, capsys):
     output = capsys.readouterr().out
     assert "Message risk: Review required" in output
     assert "From: example.com | Reply-To: example.org" in output
+    assert "Coverage: Reply-To domains differ; HTML links skipped (HTML unavailable)." in output
 
 
 def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
@@ -503,3 +504,21 @@ def test_password_change_accepts_other_services_but_not_help_subjects():
     ):
         record = assess_email(1, {"subject": subject, "body": ""})
         assert [notice["category"] for notice in record["recognized"]] == expected
+
+
+def test_text_coverage_distinguishes_matching_domains_and_links():
+    from verification.email_assessment import assess_email
+    from verification.email_report import format_email_report
+
+    message = {"subject": "Meeting notes", "body": ""}
+    record = assess_email(
+        1, message, from_domain="example.com", reply_to_domain="example.com",
+        html_body='<a href="https://example.com/">example.com</a>',
+    )
+    assert "Coverage: Reply-To domains match; HTML links compared: 1." in format_email_report(record)
+
+    record = assess_email(1, message, html_body="<p>No links here.</p>")
+    assert (
+        "Coverage: Reply-To comparison skipped (usable domains unavailable); "
+        "HTML links skipped (no eligible links)."
+    ) in format_email_report(record)
