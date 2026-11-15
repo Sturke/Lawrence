@@ -88,13 +88,14 @@
   The subject evidence remained unverified, and the risk disposition was
   `inconclusive` with no findings.
 - The v0.6 checkpoint was closed in `130bd3e`.
-- Active milestone — Gatekeeper v0.7 recognizes supported password reset
-  subjects and quotes the subject as unverified evidence. Existing risk
-  findings still determine disposition.
+- Completed milestone — [Gatekeeper Email Assessment v0.7](gatekeeper-assessment.md)
+  was committed as `b5fab4f` and pushed to GitHub’s `main` branch.
+  It recognizes supported password reset subjects and quotes the subject as
+  unverified evidence. Risk findings determine disposition.
 - Started from clean `main` at `130bd3e`, aligned with `origin/main`.
-  The assessment code, tests, guide, and status update are uncommitted.
+  At closeout, `main` and `origin/main` pointed to `b5fab4f`.
 - Two positive recognition tests initially failed against v0.6, while the
   routine password email was correctly left unlabeled. After implementation
   `.venv/bin/python -m pytest -q` passed all 88 tests and `git diff --check`
   passed. Tests use synthetic saved emails.
-- Next: review and commit the v0.7 changes.
+- Next: review and commit this checkpoint update.
