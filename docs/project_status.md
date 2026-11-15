@@ -238,8 +238,13 @@
   failed before implementation and verifies credential evidence, skipped
   script/style/head content, and continued link checks. All 100 tests passed
   with `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
-- The assessment, report, test, and documentation changes are uncommitted.
 - Manual Warp reruns of the Stansberry and Instagram exports confirmed
   that extracted HTML text was checked. Both retained their expected notice
   labels and DKIM authentication, with inconclusive risk.
-- Next: review and commit the HTML phrase coverage update.
+- HTML phrase coverage was pushed as `a8a84cc`.
+- Follow-up from clean `main` at `a8a84cc`: the text report now shows the
+  source and matched excerpt for phrase findings. Both focused tests failed
+  before the change and passed after it. The full suite passed all 100
+  tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Formatter, tests, and docs are uncommitted.
+- Next: review and commit the phrase evidence display.

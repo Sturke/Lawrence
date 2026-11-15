@@ -1,6 +1,13 @@
 """Readable terminal output for a Gatekeeper assessment."""
 
 
+PHRASE_SOURCES = {
+    "subject": "Subject",
+    "body": "Plain-text body",
+    "html_body_text": "Extracted HTML text",
+}
+
+
 def _terminal_text(value):
     """Escape nonprinting characters from message-derived fields."""
     return "".join(char if char.isprintable() else repr(char)[1:-1] for char in value)
@@ -52,11 +59,15 @@ def format_email_report(record):
     for finding in record["findings"]:
         label = finding["category"].replace("_", " ").capitalize()
         lines.append(f"  - {label}: {finding['reason']}")
+        evidence = finding["evidence"]
         if finding["category"] == "link_domain_mismatch":
-            evidence = finding["evidence"]
             displayed = _terminal_text(evidence["displayed_domain"])
             destination = _terminal_text(evidence["destination_domain"])
             lines.append(f"    Displayed: {displayed} | Destination: {destination}")
+        elif evidence.get("field") in PHRASE_SOURCES and "excerpt" in evidence:
+            source = PHRASE_SOURCES[evidence["field"]]
+            excerpt = _terminal_text(evidence["excerpt"])
+            lines.append(f"    Source: {source} | Matched: {excerpt}")
     if record["checks"]["plain_text_body"]["status"] == "skipped":
         if record["checks"]["html_body_phrases"]["status"] == "checked":
             lines.append("Coverage: Checked extracted HTML text (no plain-text body).")

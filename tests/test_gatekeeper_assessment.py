@@ -385,6 +385,7 @@ def test_text_report_separates_approval_from_domain_authentication(tmp_path, cap
     assert "Sender domain: Unverified (DKIM check not requested)" in output
     assert "Message risk: Review required" in output
     assert "Credential request" in output
+    assert "Source: Plain-text body | Matched: Verify your password" in output
 
 
 def test_text_report_shows_each_link_domain_pair(tmp_path, capsys):
@@ -461,6 +462,9 @@ def test_html_only_assesses_subject_links_and_body_phrases(tmp_path, capsys):
     assert phrase["evidence"]["excerpt"] == "Verify your password"
     assert link["category"] == "link_domain_mismatch"
     assert record["checks"]["html_body_phrases"] == {"status": "checked"}
+    main([str(source), "--assess", "--format", "text", "--database", str(database)])
+    output = capsys.readouterr().out
+    assert "Source: Extracted HTML text | Matched: Verify your password" in output
     assert record["checks"]["plain_text_body"] == {
         "status": "skipped", "reason": "plain_text_body_unavailable",
     }
