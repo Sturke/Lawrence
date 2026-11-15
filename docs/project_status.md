@@ -87,4 +87,14 @@
   `account_sign_in_notice` with service `iCloud` and method `a web browser`.
   The subject evidence remained unverified, and the risk disposition was
   `inconclusive` with no findings.
-- Next: review and commit this checkpoint update.
+- The v0.6 checkpoint was closed in `130bd3e`.
+- Active milestone — Gatekeeper v0.7 recognizes supported password reset
+  subjects and quotes the subject as unverified evidence. Existing risk
+  findings still determine disposition.
+- Started from clean `main` at `130bd3e`, aligned with `origin/main`.
+  The assessment code, tests, guide, and status update are uncommitted.
+- Two positive recognition tests initially failed against v0.6, while the
+  routine password email was correctly left unlabeled. After implementation
+  `.venv/bin/python -m pytest -q` passed all 88 tests and `git diff --check`
+  passed. Tests use synthetic saved emails.
+- Next: review and commit the v0.7 changes.

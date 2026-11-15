@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.6"
+    assert record["version"] == "0.7"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.6"
+    assert record["version"] == "0.7"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
@@ -212,3 +212,34 @@ def test_sign_in_notice_extracts_explicit_method(tmp_path, capsys):
     }
     assert notice["evidence"]["excerpt"] == subject
     assert notice["evidence"]["verification_status"] == "unverified"
+
+
+def test_recognizes_password_reset_request_from_subject(tmp_path, capsys):
+    subject = "Password reset requested"
+    record = assess(tmp_path, capsys, subject, "See account activity.")
+
+    assert record["recognized"] == [{
+        "category": "password_reset_notice",
+        "details": {},
+        "evidence": {
+            "field": "subject",
+            "excerpt": subject,
+            "source_type": "local_email",
+            "verification_status": "unverified",
+        },
+    }]
+    assert record["disposition"] == "inconclusive"
+
+
+def test_routine_password_message_is_not_recognized(tmp_path, capsys):
+    record = assess(tmp_path, capsys, "Password manager tips", "Use unique passwords.")
+
+    assert record["recognized"] == []
+
+
+def test_password_reset_notice_can_still_require_review(tmp_path, capsys):
+    record = assess(tmp_path, capsys, "Reset your password", "Verify your password.")
+
+    assert record["recognized"][0]["category"] == "password_reset_notice"
+    assert record["disposition"] == "review_required"
+    assert record["findings"][0]["category"] == "credential_request"

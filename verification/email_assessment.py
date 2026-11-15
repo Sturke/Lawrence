@@ -27,6 +27,16 @@ ACCOUNT_SIGN_IN_SUBJECT = re.compile(
     re.IGNORECASE,
 )
 
+PASSWORD_RESET_SUBJECT = re.compile(
+    r"(?:password reset request(?:ed)?|reset your password)[.!]?",
+    re.IGNORECASE,
+)
+
+NOTICE_SUBJECTS = (
+    ("account_sign_in_notice", ACCOUNT_SIGN_IN_SUBJECT),
+    ("password_reset_notice", PASSWORD_RESET_SUBJECT),
+)
+
 
 class LinkDomainParser(HTMLParser):
     domain_pattern = re.compile(
@@ -147,15 +157,17 @@ def assess_email(
             })
 
     recognized = []
-    notice = ACCOUNT_SIGN_IN_SUBJECT.fullmatch(message["subject"].strip())
-    if notice:
+    for category, pattern in NOTICE_SUBJECTS:
+        notice = pattern.fullmatch(message["subject"].strip())
+        if notice is None:
+            continue
         details = {
             field: value
             for field, value in notice.groupdict().items()
             if value is not None
         }
         recognized.append({
-            "category": "account_sign_in_notice",
+            "category": category,
             "details": details,
             "evidence": {
                 "field": "subject",
@@ -166,7 +178,7 @@ def assess_email(
         })
 
     return {
-        "version": "0.6",
+        "version": "0.7",
         "recognized": recognized,
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",
