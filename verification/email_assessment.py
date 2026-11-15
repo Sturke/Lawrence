@@ -20,6 +20,13 @@ RULES = (
     ),
 )
 
+ACCOUNT_SIGN_IN_SUBJECT = re.compile(
+    r"(?:your (?:[\w-]+ ){0,5}account was used to sign in to .+"
+    r"|new sign[ -]in to your account)[.!]?",
+    re.IGNORECASE,
+)
+
+
 class LinkDomainParser(HTMLParser):
     domain_pattern = re.compile(
         r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}",
@@ -138,14 +145,27 @@ def assess_email(
                 },
             })
 
+    recognized = []
+    if ACCOUNT_SIGN_IN_SUBJECT.fullmatch(message["subject"].strip()):
+        recognized.append({
+            "category": "account_sign_in_notice",
+            "evidence": {
+                "field": "subject",
+                "excerpt": message["subject"],
+                "source_type": "local_email",
+                "verification_status": "unverified",
+            },
+        })
+
     return {
-        "version": "0.4",
+        "version": "0.5",
+        "recognized": recognized,
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",
         "confidence": "low",
         "reason": (
             "Review the findings and verify requests through a trusted channel."
-            if findings else "No supported signals were found. Message risk remains unknown."
+            if findings else "No supported risk signals were found. Message risk remains unknown."
         ),
         "findings": findings,
         "checks": {

@@ -60,4 +60,16 @@
   `From` and `Reply-To` domains. The Apple Mail export skipped that check
   because at least one usable header domain was unavailable. Both HTML
   bodies yielded zero eligible links.
-- Next: review and commit the manual test guide and status update.
+- The manual test guide and status update were committed as `16cb190`.
+- Active milestone — Gatekeeper v0.5 recognizes supported account sign-in
+  notice subjects and quotes the subject as unverified evidence in
+  `recognized`. Existing risk findings still determine the disposition.
+- Started from clean `main` at `16cb190`, aligned with `origin/main`.
+  The assessment code, tests, guide, and this handoff are uncommitted.
+- Both new acceptance tests initially failed because `recognized` was missing.
+  After implementation, `.venv/bin/python -m pytest -q` passed all 84 tests.
+  `git diff --check` passed.
+- Manual v0.5 verification in Warp: the saved Apple Mail export returned
+  `account_sign_in_notice` with an unverified subject excerpt. The risk
+  disposition was `inconclusive` with no findings.
+- Next: review and commit the v0.5 changes.

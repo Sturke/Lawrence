@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.4
+# Gatekeeper Email Assessment v0.5
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -24,6 +24,15 @@ command for the second file in the same Warp tab.
 
 Both runs use the same temporary database. Compare `checks` to see what
 Gatekeeper could evaluate for each email.
+
+## Recognized message types
+
+The `recognized` list labels the apparent purpose of an email. The initial
+category, `account_sign_in_notice`, matches supported subject patterns such as
+“Your Example Account was used to sign in to Example Cloud” and “New sign-in
+to your account.” Each match quotes the subject as unverified local evidence.
+Other subjects produce an empty list. A recognized type can accompany any risk
+disposition. Sender identity and the reported sign-in remain unverified.
 
 ## Phrase checks
 
@@ -57,7 +66,7 @@ produces a low-confidence `link_domain_mismatch` finding with
 reads the HTML locally without rendering it or opening links.
 
 The record includes `version`, the stored `message_id`, `disposition`,
-`confidence`, `reason`, `findings`, `checks`, and `limitations`. The `version` field identifies the assessment rules used to produce the record. A match yields
+`confidence`, `reason`, `findings`, `recognized`, `checks`, and `limitations`. The `version` field identifies the assessment rules used to produce the record. A match yields
 `review_required` with `low` confidence. When no signal is found, the result is `inconclusive` with `low` confidence and an empty findings list. Confidence describes the
 risk inference. A phrase alone supports only low confidence, including when
 several phrases match. The record offers no clearance or sender authentication.
