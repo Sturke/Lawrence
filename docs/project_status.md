@@ -43,7 +43,17 @@
 - Broader detection, sender authentication, inbox access, and autonomous action
   remain outside this increment. Master-document scenarios were not validated.
 
-## Handoff
+## Current handoff — November 15, 2026
 
-The Gatekeeper v0.1 diff was reviewed and the full suite passed again
-(77 tests) before the local checkpoint commit.
+- Active milestone — [Gatekeeper Email Assessment v0.4](gatekeeper-assessment.md)
+  reports whether the header and HTML link domain checks could compare inputs.
+  A matching HTML link now reports one comparison and zero findings.
+- Started from clean `main` at `f7e66f1`, aligned with local `origin/main`.
+  The implementation, assessment tests, assessment guide, and this status
+  update are uncommitted.
+- The new assertion failed against v0.3 because the JSON had no `checks` field.
+  After implementation, `.venv/bin/python -m pytest -q` passed all 82 tests,
+  including missing HTML, HTML with zero eligible links, and matching and
+  mismatched links. `git diff --check` passed.
+- Next: review and commit the diff. The two saved emails have not been
+  reassessed under v0.4.

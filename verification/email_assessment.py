@@ -30,6 +30,7 @@ class LinkDomainParser(HTMLParser):
         super().__init__()
         self.href = None
         self.label_parts = []
+        self.links_compared = 0
         self.mismatches = []
 
     def handle_starttag(self, tag, attrs):
@@ -57,12 +58,13 @@ class LinkDomainParser(HTMLParser):
         except ValueError:
             return
 
-        if (
-            destination.scheme in {"http", "https"}
-            and destination_domain
-            and destination_domain.lower() != displayed_domain
-        ):
+        if destination.scheme not in {"http", "https"} or not destination_domain:
+            return
+
+        self.links_compared += 1
+        if destination_domain.lower() != displayed_domain:
             self.mismatches.append((displayed_domain, destination_domain.lower()))
+
 
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None
@@ -92,7 +94,13 @@ def assess_email(
             })
             break
 
-    if from_domain and reply_to_domain and from_domain != reply_to_domain:
+    reply_to_check = {"status": "compared"}
+    if not (from_domain and reply_to_domain):
+        reply_to_check = {
+            "status": "skipped",
+            "reason": "from_or_reply_to_domain_unavailable",
+        }
+    elif from_domain != reply_to_domain:
         findings.append({
             "category": "reply_to_domain_mismatch",
             "confidence": "low",
@@ -105,10 +113,18 @@ def assess_email(
             },
         })
 
-    if html_body:
+    html_check = {
+        "status": "skipped",
+        "reason": "html_body_unavailable",
+        "links_compared": 0,
+    }
+    if html_body is not None:
         parser = LinkDomainParser()
         parser.feed(html_body)
         parser.close()
+        html_check = {"status": "compared", "links_compared": parser.links_compared}
+        if not parser.links_compared:
+            html_check.update(status="skipped", reason="no_eligible_links")
         for displayed_domain, destination_domain in parser.mismatches:
             findings.append({
                 "category": "link_domain_mismatch",
@@ -123,7 +139,7 @@ def assess_email(
             })
 
     return {
-        "version": "0.3",
+        "version": "0.4",
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",
         "confidence": "low",
@@ -132,6 +148,10 @@ def assess_email(
             if findings else "No supported signals were found. Message risk remains unknown."
         ),
         "findings": findings,
+        "checks": {
+            "reply_to_domains": reply_to_check,
+            "html_link_domains": html_check,
+        },
         "limitations": [
             "Phrase matching can miss risks or match benign text.",
             "The assessment checks the subject, plain-text body, and available From and Reply-To domains.",

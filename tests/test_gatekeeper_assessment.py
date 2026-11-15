@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.3"
+    assert record["version"] == "0.4"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -88,7 +88,8 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.3"
+    assert record["version"] == "0.4"
+    assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
 def test_link_domain_mismatch_requires_review(tmp_path, capsys):
@@ -112,6 +113,7 @@ def test_link_domain_mismatch_requires_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "review_required"
+    assert record["checks"]["html_link_domains"]["links_compared"] == 1
     (finding,) = record["findings"]
     assert finding["category"] == "link_domain_mismatch"
     assert finding["confidence"] == "low"
@@ -140,3 +142,32 @@ def test_matching_link_domain_does_not_require_review(tmp_path, capsys):
 
     assert record["disposition"] == "inconclusive"
     assert record["findings"] == []
+    assert record["checks"]["html_link_domains"] == {
+        "status": "compared",
+        "links_compared": 1,
+    }
+
+
+def test_zero_link_comparisons_explain_why():
+    from verification.email_assessment import assess_email
+
+    message = {"subject": "Meeting notes", "body": "See you tomorrow."}
+    without_html = assess_email(1, message)
+    with_html = assess_email(
+        1, message, html_body='<a href="https://example.com/">Meeting notes</a>'
+    )
+
+    assert without_html["checks"]["html_link_domains"] == {
+        "status": "skipped",
+        "reason": "html_body_unavailable",
+        "links_compared": 0,
+    }
+    assert with_html["checks"]["html_link_domains"] == {
+        "status": "skipped",
+        "reason": "no_eligible_links",
+        "links_compared": 0,
+    }
+    assert without_html["checks"]["reply_to_domains"] == {
+        "status": "skipped",
+        "reason": "from_or_reply_to_domain_unavailable",
+    }

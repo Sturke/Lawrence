@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.3
+# Gatekeeper Email Assessment v0.4
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -35,7 +35,7 @@ produces a low-confidence `link_domain_mismatch` finding with
 reads the HTML locally without rendering it or opening links.
 
 The record includes `version`, the stored `message_id`, `disposition`,
-`confidence`, `reason`, `findings`, and `limitations`. The `version` field identifies the assessment rules used to produce the record. A match yields
+`confidence`, `reason`, `findings`, `checks`, and `limitations`. The `version` field identifies the assessment rules used to produce the record. A match yields
 `review_required` with `low` confidence. When no signal is found, the result is `inconclusive` with `low` confidence and an empty findings list. Confidence describes the
 risk inference. A phrase alone supports only low confidence, including when
 several phrases match. The record offers no clearance or sender authentication.
@@ -43,3 +43,16 @@ several phrases match. The record offers no clearance or sender authentication.
 Review the quoted evidence in the original message and verify requests through
 a trusted channel. JSON can be saved by the caller. SQLite stores the imported
 message. The assessment makes no network requests and takes no inbox actions.
+
+
+The `checks` object describes which domain comparisons ran for this message.
+
+- `reply_to_domains` reports `compared` when both header domains were usable.
+  Otherwise it reports `skipped` with reason `from_or_reply_to_domain_unavailable`.
+- `html_link_domains` reports the number of eligible links in `links_compared`,
+  including links whose domains match. A positive count has status `compared`.
+  A zero count has status `skipped` with reason `html_body_unavailable` when
+  there was no usable HTML body, or `no_eligible_links` when HTML was read
+  but yielded no eligible links.
+
+Use `findings` for signals that triggered review.
