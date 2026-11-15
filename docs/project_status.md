@@ -74,11 +74,12 @@
   `account_sign_in_notice` with an unverified subject excerpt. The risk
   disposition was `inconclusive` with no findings.
 - The v0.5 checkpoint was closed in `3443ccd`.
-- Active milestone — Gatekeeper v0.6 extracts `service` and an optional
-  `sign_in_method` from supported sign-in notice subjects. The quoted subject
+- Completed milestone — [Gatekeeper Email Assessment v0.6](gatekeeper-assessment.md)
+  was committed as `fa9f50c` and pushed to GitHub’s `main` branch. It extracts
+  `service` and an optional `sign_in_method` from supported sign-in notice subjects. The quoted subject
   remains unverified evidence, and risk findings still determine disposition.
 - Started from clean `main` at `3443ccd`, aligned with `origin/main`.
-  The assessment code, tests, guide, and status update are uncommitted.
+  At closeout, `main` and `origin/main` pointed to `fa9f50c`.
 - Three focused tests failed against v0.5 because `details` was missing.
   After implementation, `.venv/bin/python -m pytest -q` passed all 85 tests.
   `git diff --check` passed.
@@ -86,4 +87,4 @@
   `account_sign_in_notice` with service `iCloud` and method `a web browser`.
   The subject evidence remained unverified, and the risk disposition was
   `inconclusive` with no findings.
-- Next: review and commit the v0.6 changes.
+- Next: review and commit this checkpoint update.
