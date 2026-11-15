@@ -73,5 +73,17 @@
 - Manual v0.5 verification in Warp: the saved Apple Mail export returned
   `account_sign_in_notice` with an unverified subject excerpt. The risk
   disposition was `inconclusive` with no findings.
-- Proposed next step for v0.6: extract the service and any explicitly stated
-  sign-in method from supported notice subjects as unverified details.
+- The v0.5 checkpoint was closed in `3443ccd`.
+- Active milestone — Gatekeeper v0.6 extracts `service` and an optional
+  `sign_in_method` from supported sign-in notice subjects. The quoted subject
+  remains unverified evidence, and risk findings still determine disposition.
+- Started from clean `main` at `3443ccd`, aligned with `origin/main`.
+  The assessment code, tests, guide, and status update are uncommitted.
+- Three focused tests failed against v0.5 because `details` was missing.
+  After implementation, `.venv/bin/python -m pytest -q` passed all 85 tests.
+  `git diff --check` passed.
+- Manual v0.6 verification in Warp: the saved Apple Mail export returned
+  `account_sign_in_notice` with service `iCloud` and method `a web browser`.
+  The subject evidence remained unverified, and the risk disposition was
+  `inconclusive` with no findings.
+- Next: review and commit the v0.6 changes.

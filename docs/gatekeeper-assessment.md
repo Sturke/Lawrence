@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.5
+# Gatekeeper Email Assessment v0.6
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -33,6 +33,13 @@ category, `account_sign_in_notice`, matches supported subject patterns such as
 to your account.” Each match quotes the subject as unverified local evidence.
 Other subjects produce an empty list. A recognized type can accompany any risk
 disposition. Sender identity and the reported sign-in remain unverified.
+
+Each recognized notice includes a `details` object. In the subject pattern
+“Your … Account was used to sign in to …”, the text after “sign in to” supplies
+`service`, and an optional “via …” supplies `sign_in_method`. Fields without
+a value in the supported pattern are omitted. For example, “New sign-in to
+your account” yields an empty `details` object. The quoted subject is the
+unverified evidence for these extracted values.
 
 ## Phrase checks
 

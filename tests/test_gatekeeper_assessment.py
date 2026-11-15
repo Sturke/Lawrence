@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.5"
+    assert record["version"] == "0.6"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.5"
+    assert record["version"] == "0.6"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
@@ -180,6 +180,7 @@ def test_recognizes_account_sign_in_notice_from_subject(tmp_path, capsys):
 
     assert record["recognized"] == [{
         "category": "account_sign_in_notice",
+        "details": {"service": "Example Cloud"},
         "evidence": {
             "field": "subject",
             "excerpt": subject,
@@ -195,5 +196,19 @@ def test_recognized_notice_can_still_require_review(tmp_path, capsys):
     record = assess(tmp_path, capsys, "New sign-in to your account", "Verify your password.")
 
     assert record["recognized"][0]["category"] == "account_sign_in_notice"
+    assert record["recognized"][0]["details"] == {}
     assert record["disposition"] == "review_required"
     assert record["findings"][0]["category"] == "credential_request"
+
+
+def test_sign_in_notice_extracts_explicit_method(tmp_path, capsys):
+    subject = "Your Example Account was used to sign in to Example Cloud via a web browser."
+    record = assess(tmp_path, capsys, subject, "See account activity.")
+
+    (notice,) = record["recognized"]
+    assert notice["details"] == {
+        "service": "Example Cloud",
+        "sign_in_method": "a web browser",
+    }
+    assert notice["evidence"]["excerpt"] == subject
+    assert notice["evidence"]["verification_status"] == "unverified"

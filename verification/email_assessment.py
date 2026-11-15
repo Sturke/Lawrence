@@ -21,7 +21,8 @@ RULES = (
 )
 
 ACCOUNT_SIGN_IN_SUBJECT = re.compile(
-    r"(?:your (?:[\w-]+ ){0,5}account was used to sign in to .+"
+    r"(?:your (?:[\w-]+ ){0,5}account was used to sign in to (?P<service>.+?)"
+    r"(?: via (?P<sign_in_method>.+?))?"
     r"|new sign[ -]in to your account)[.!]?",
     re.IGNORECASE,
 )
@@ -146,9 +147,16 @@ def assess_email(
             })
 
     recognized = []
-    if ACCOUNT_SIGN_IN_SUBJECT.fullmatch(message["subject"].strip()):
+    notice = ACCOUNT_SIGN_IN_SUBJECT.fullmatch(message["subject"].strip())
+    if notice:
+        details = {
+            field: value
+            for field, value in notice.groupdict().items()
+            if value is not None
+        }
         recognized.append({
             "category": "account_sign_in_notice",
+            "details": details,
             "evidence": {
                 "field": "subject",
                 "excerpt": message["subject"],
@@ -158,7 +166,7 @@ def assess_email(
         })
 
     return {
-        "version": "0.5",
+        "version": "0.6",
         "recognized": recognized,
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",
