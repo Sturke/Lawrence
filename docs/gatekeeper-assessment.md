@@ -3,7 +3,29 @@
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
 import rules apply. Assessment reads the decoded subject and plain-text body.
-Sender and Date are self-reported. Attachments and HTML are outside assessment coverage.
+The `From` and `Date` headers are self-reported. Attachments are outside
+assessment coverage. When an HTML alternative is available, Gatekeeper compares
+domain names shown as link labels with their HTTP or HTTPS destination hostnames.
+
+## Manual test with saved emails
+
+In Warp, run this setup command by itself and press Return. Run it once per test session.
+
+```bash
+cd ~/GitHub/Butler && demo_dir="$(mktemp -d)"
+```
+Paste the assessment command, add a space, and drag a saved `.eml` file from
+Finder into Warp to insert its path. Then press Return. Repeat the assessment
+command for the second file in the same Warp tab.
+
+```bash
+.venv/bin/python -m tools.gatekeeper_import --assess --database "$demo_dir/gatekeeper.sqlite3"
+```
+
+Both runs use the same temporary database. Compare `checks` to see what
+Gatekeeper could evaluate for each email.
+
+## Phrase checks
 
 | Category | v0.1 signal |
 | --- | --- |

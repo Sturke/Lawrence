@@ -55,5 +55,9 @@
   After implementation, `.venv/bin/python -m pytest -q` passed all 82 tests,
   including missing HTML, HTML with zero eligible links, and matching and
   mismatched links. `git diff --check` passed.
-- Next: review and commit this status update. The two saved emails have not been
-  reassessed under v0.4.
+- Manual v0.4 verification in Warp: the Gmail and Apple Mail exports both
+  returned `inconclusive` with no findings. The Gmail export had matching
+  `From` and `Reply-To` domains. The Apple Mail export skipped that check
+  because at least one usable header domain was unavailable. Both HTML
+  bodies yielded zero eligible links.
+- Next: review and commit the manual test guide and status update.
