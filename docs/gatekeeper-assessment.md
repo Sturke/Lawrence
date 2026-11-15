@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.8
+# Gatekeeper Email Assessment v0.9
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -104,3 +104,17 @@ The `checks` object describes which domain comparisons ran for this message.
   but yielded no eligible links.
 
 Use `findings` for signals that triggered review.
+
+
+## Sender trust
+
+Use the repeatable `--approved-sender ADDRESS` option with `--assess` to
+supply exact approved addresses for the current run. The `sender_trust`
+record reports the claimed mailbox from the `From` header and whether it
+exactly matches an approved address. Gatekeeper requires one unambiguous
+mailbox to report a claimed address.
+
+A match remains `unverified` because saved email currently supplies no
+authentication evidence that Gatekeeper trusts. This includes authentication
+results written in the exported message. Sender trust is reported separately
+from the existing risk disposition.

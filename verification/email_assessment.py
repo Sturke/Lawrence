@@ -91,7 +91,8 @@ class LinkDomainParser(HTMLParser):
 
 
 def assess_email(
-    message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None
+    message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
+    claimed_address=None, approved_senders=(),
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
@@ -184,7 +185,16 @@ def assess_email(
         })
 
     return {
-        "version": "0.8",
+        "version": "0.9",
+        "sender_trust": {
+            "claimed_address": claimed_address,
+            "approved_address_match": claimed_address in approved_senders,
+            "status": "unverified",
+            "reason": (
+                "trusted_authentication_unavailable" if claimed_address is not None
+                else "claimed_address_unavailable"
+            ),
+        },
         "recognized": recognized,
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",

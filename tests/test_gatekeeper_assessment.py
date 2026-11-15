@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.8"
+    assert record["version"] == "0.9"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.8"
+    assert record["version"] == "0.9"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
@@ -255,3 +255,31 @@ def test_recognizes_password_change_separately_from_reset(tmp_path, capsys):
     assert notice["evidence"]["verification_status"] == "unverified"
     assert record["disposition"] == "inconclusive"
     assert record["findings"] == []
+
+
+def test_listed_sender_claim_remains_unverified(tmp_path, capsys):
+    source = tmp_path / "sender.eml"
+    source.write_text(
+        "From: Notices <notices@example.com>\n"
+        "Authentication-Results: mx.example.net; dmarc=pass header.from=example.com\n"
+        "Date: Sat, 14 Nov 2026 10:00:00 -0600\n"
+        "Subject: Meeting notes\n\nVerify your password.\n",
+        encoding="utf-8",
+    )
+    database = tmp_path / "messages.sqlite3"
+    for approved, expected_match in (
+        ("notices@example.com", True),
+        ("other@example.com", False),
+    ):
+        main([
+            str(source), "--database", str(database), "--assess",
+            "--approved-sender", approved,
+        ])
+        record = json.loads(capsys.readouterr().out)
+        assert record["sender_trust"] == {
+            "claimed_address": "notices@example.com",
+            "approved_address_match": expected_match,
+            "status": "unverified",
+            "reason": "trusted_authentication_unavailable",
+        }
+        assert record["disposition"] == "review_required"

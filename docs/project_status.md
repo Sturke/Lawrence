@@ -99,13 +99,24 @@
   `.venv/bin/python -m pytest -q` passed all 88 tests and `git diff --check`
   passed. Tests use synthetic saved emails.
 - The v0.7 checkpoint was closed in `7e364f0`.
-- Active milestone — Gatekeeper v0.8 recognizes supported password change
+- Completed milestone — Gatekeeper v0.8 was committed as `3229371` and
+  pushed to `main`. It recognizes supported password change
   subjects separately from password reset requests and quotes the subject
   as unverified evidence.
 - Started from clean `main` at `7e364f0`, aligned with `origin/main`.
-  The assessment code, tests, guide, and status update are uncommitted.
 - The new saved-email test initially failed because v0.7 had no recognition
   for password changes. After implementation, `.venv/bin/python -m pytest -q`
   passed all 89 tests and `git diff --check` passed. Verification used a
   synthetic saved email.
-- Next: review and commit the v0.8 changes.
+- Active milestone — Gatekeeper v0.9 reports an exact match against
+  user-supplied approved addresses. Sender trust stays unverified pending a
+  reliable source of authentication evidence.
+- Started from clean `main` at `3229371`, aligned with `origin/main`.
+  Importer, assessment, test, guide, and status updates are uncommitted.
+- The new saved-email test failed against v0.8 because the approval option
+  was absent. After implementation, all 90 tests passed with
+  `.venv/bin/python -m pytest -q`. The test covers exact and same-domain
+  non-matches, unverified status despite a claimed authentication pass, and
+  preservation of the risk verdict. `git diff --check` passed.
+- Next: review the diff. A trusted authentication source and positive trust
+  decision remain future work.

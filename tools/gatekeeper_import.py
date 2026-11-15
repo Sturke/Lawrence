@@ -12,8 +12,8 @@ from memory.gatekeeper import MessageStore
 from verification.email_assessment import assess_email
 
 
-def single_address_domain(message, header_name):
-    """Return the domain when the header has one unambiguous mailbox."""
+def single_mailbox(message, header_name):
+    """Return the address when the header has one unambiguous mailbox."""
     headers = message.get_all(header_name, [])
     if len(headers) != 1:
         return None
@@ -26,7 +26,7 @@ def single_address_domain(message, header_name):
     if not address.username or not address.domain:
         return None
 
-    return address.domain.casefold()
+    return address
 
 
 def read_email(path, *, domains=None):
@@ -39,8 +39,13 @@ def read_email(path, *, domains=None):
         message = BytesParser(policy=policy.default).parse(source)
     sender = str(message.get("From", "")).strip()
     if domains is not None:
-        domains["from_domain"] = single_address_domain(message, "From")
-        domains["reply_to_domain"] = single_address_domain(message, "Reply-To")
+        from_address = single_mailbox(message, "From")
+        reply_to_address = single_mailbox(message, "Reply-To")
+        if from_address is not None:
+            domains["claimed_address"] = from_address.addr_spec
+            domains["from_domain"] = from_address.domain.casefold()
+        if reply_to_address is not None:
+            domains["reply_to_domain"] = reply_to_address.domain.casefold()
         html_part = message.get_body(preferencelist=("html",))
         if html_part is not None:
             try:
@@ -84,7 +89,13 @@ def main(argv=None):
         help="SQLite file (default: ~/Library/Application Support/Butler/gatekeeper.sqlite3)",
     )
     parser.add_argument("--assess", action="store_true", help="Emit a JSON review record")
+    parser.add_argument(
+        "--approved-sender", action="append", default=[], metavar="ADDRESS",
+        help="Exact approved address for this assessment (repeatable)",
+    )
     args = parser.parse_args(argv)
+    if args.approved_sender and not args.assess:
+        parser.error("--approved-sender requires --assess")
     try:
         # Validate the input before creating any persistent storage.
         domains = {} if args.assess else None
@@ -95,7 +106,10 @@ def main(argv=None):
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"Import failed: {error}\n")
     if args.assess:
-        print(json.dumps(assess_email(message_id, message, **domains)))
+        record = assess_email(
+            message_id, message, approved_senders=args.approved_sender, **domains
+        )
+        print(json.dumps(record))
     else:
         print(f"Stored message {message_id} in {database}")
 
