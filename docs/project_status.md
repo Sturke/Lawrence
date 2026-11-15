@@ -45,15 +45,15 @@
 
 ## Current handoff — November 15, 2026
 
-- Active milestone — [Gatekeeper Email Assessment v0.4](gatekeeper-assessment.md)
+- Completed milestone — [Gatekeeper Email Assessment v0.4](gatekeeper-assessment.md)
+  was committed as `8c2caa2` and pushed to GitHub’s `main` branch. It
   reports whether the header and HTML link domain checks could compare inputs.
   A matching HTML link now reports one comparison and zero findings.
 - Started from clean `main` at `f7e66f1`, aligned with local `origin/main`.
-  The implementation, assessment tests, assessment guide, and this status
-  update are uncommitted.
+  At closeout, `main` and `origin/main` pointed to `8c2caa2`.
 - The new assertion failed against v0.3 because the JSON had no `checks` field.
   After implementation, `.venv/bin/python -m pytest -q` passed all 82 tests,
   including missing HTML, HTML with zero eligible links, and matching and
   mismatched links. `git diff --check` passed.
-- Next: review and commit the diff. The two saved emails have not been
+- Next: review and commit this status update. The two saved emails have not been
   reassessed under v0.4.
