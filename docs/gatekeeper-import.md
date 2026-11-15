@@ -25,7 +25,8 @@ system. Use the default Application Support location for persistent storage.
 
 The importer decodes the sender and subject headers and selects the plain-text
 body, including in multipart emails. Attachments are ignored. HTML-only emails
-are rejected; HTML is never rendered and remote content is never fetched.
+are accepted with an empty stored plain-text body. HTML is never rendered
+and remote content is never fetched.
 Missing subjects and empty text bodies are allowed. A From header and a valid
 Date header with a known timezone are required. Invalid input produces an error
 without inserting a message.

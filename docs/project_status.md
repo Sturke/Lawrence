@@ -207,5 +207,16 @@
   `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
 - Manual verification in Warp: the NPR export now reports a password change
   notice, authenticates `npr.org` via DKIM, and reports inconclusive risk.
-- Next: review and commit the assessment, test, guide, and status changes.
-  HTML-only import is a separate follow-up.
+- The NPR recognition change was pushed as `9cf9041`.
+- HTML-only import started from clean `main` at `9cf9041`. It now assesses
+  the subject and eligible HTML links, stores an empty plain-text body, and
+  reports the skipped body phrase check. DKIM still uses the original bytes.
+- The new HTML-only assessment test reproduced the import failure first.
+  After the change, all 97 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: the HTML-only reset and Instagram password
+  change exports both imported, authenticated their respective domains via
+  DKIM, and reported skipped plain-text body checks. Both risk verdicts were
+  inconclusive and neither subject was recognized.
+- Next: review and commit the HTML-only import changes. Then verify the
+  exact subjects and use them as recognition regression cases.

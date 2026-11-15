@@ -57,7 +57,7 @@ def test_missing_subject_and_empty_body_are_allowed(tmp_path):
     ("From: alex@example.com\n\nHello", "valid Date"),
     ("From: alex@example.com\nDate: yesterday\n\nHello", "valid Date"),
     ("From: alex@example.com\nDate: Sun, 13 Sep 2026 18:30:00 -0000\n\nHello", "known timezone"),
-    ("From: alex@example.com\nDate: Sun, 13 Sep 2026 18:30:00 +0000\nContent-Type: text/html\n\n<p>Hello</p>", "plain-text body"),
+    ("From: alex@example.com\nDate: Sun, 13 Sep 2026 18:30:00 +0000\nContent-Type: application/octet-stream\n\nHello", "plain-text or HTML body"),
 ])
 def test_invalid_email_does_not_store_a_row(tmp_path, content, reason):
     path = tmp_path / "invalid.eml"

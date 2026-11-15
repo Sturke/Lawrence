@@ -94,11 +94,13 @@ class LinkDomainParser(HTMLParser):
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
     claimed_address=None, approved_senders=(), sender_domain_authentication=None,
+    plain_text_available=True,
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
+    phrase_fields = ("subject", "body") if plain_text_available else ("subject",)
     for category, pattern, reason in RULES:
-        for field in ("subject", "body"):
+        for field in phrase_fields:
             match = pattern.search(message[field])
             if match is None:
                 continue
@@ -210,12 +212,16 @@ def assess_email(
         ),
         "findings": findings,
         "checks": {
+            "plain_text_body": (
+                {"status": "checked"} if plain_text_available else
+                {"status": "skipped", "reason": "plain_text_body_unavailable"}
+            ),
             "reply_to_domains": reply_to_check,
             "html_link_domains": html_check,
         },
         "limitations": [
             "Phrase matching can miss risks or match benign text.",
-            "The assessment checks the subject, plain-text body, and available From and Reply-To domains.",
+            "The assessment checks the subject, plain-text body, when available, and available From and Reply-To domains.",
             "The HTML link check compares domain-only labels with HTTP or HTTPS destination hostnames without opening links.",
             "Sender identity and message claims were not verified.",
         ],

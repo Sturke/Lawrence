@@ -2,7 +2,7 @@
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
-import rules apply. Assessment reads the decoded subject and plain-text body.
+import rules apply. Assessment reads the decoded subject and plain-text body when available.
 The `From` and `Date` headers are self-reported. Attachments are outside
 assessment coverage. When an HTML alternative is available, Gatekeeper compares
 domain names shown as link labels with their HTTP or HTTPS destination hostnames.
@@ -10,7 +10,7 @@ domain names shown as link labels with their HTTP or HTTPS destination hostnames
 ## 1.0 release notes
 
 Gatekeeper 1.0 is the first release of the local saved-email workflow.
-Import a saved `.eml` with a plain-text body and choose the default JSON
+Import a saved `.eml` with a plain-text or HTML body and choose the default JSON
 assessment or the readable terminal report. Gatekeeper recognizes supported
 account sign-in, password reset, and password change notices, preserves
 evidence for its findings, and reports which checks could run.
@@ -100,7 +100,7 @@ domains differ, the assessment returns `review_required` with a low-confidence
 Matching domains produce no mismatch finding. If either domain is unavailable,
 Gatekeeper skips this check.
 
-For a local `.eml` with both a plain-text body and an HTML alternative,
+For a local `.eml` with an HTML body or alternative,
 Gatekeeper compares links whose entire label is a domain name with their
 HTTP or HTTPS destination hostnames. The comparison ignores case. A mismatch
 produces a low-confidence `link_domain_mismatch` finding with
@@ -179,3 +179,8 @@ lines. Risk findings appear under the verdict. For each link domain mismatch,
 the report shows the displayed domain and the destination hostname. Add `--verify-dkim` when you
 want the report to include a live DNS verification result. JSON remains the
 default and includes the full evidence and assessment limitations.
+
+
+For HTML-only mail, Gatekeeper still checks the subject and eligible HTML links.
+The JSON `checks.plain_text_body` entry and the text report show that the body
+phrase check was skipped. The stored plain-text body is empty.
