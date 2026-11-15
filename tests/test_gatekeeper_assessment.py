@@ -539,3 +539,13 @@ def test_folder_assessment_continues_after_invalid_email(tmp_path, capsys):
     assert failed["file"] == "02.eml" and "error" in failed
     assert last["assessment"]["disposition"] == "review_required"
     assert batch["summary"] == {"assessed": 2, "review_required": 1, "import_failures": 1}
+
+    main([
+        "--folder", str(folder), "--assess", "--format", "text", "--review-only",
+        "--database", str(tmp_path / "filtered.db"),
+    ])
+    output = capsys.readouterr().out
+    assert "01.eml" not in output
+    assert "02.eml" in output and "Import failed:" in output
+    assert "03.EML" in output and "Review required" in output
+    assert "Batch summary: 2 assessed · 1 require review · 1 import failures" in output

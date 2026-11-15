@@ -265,8 +265,16 @@
   The new test failed before the option existed and now verifies a
   recognized reset, an invalid file, and a subsequent review finding.
   All 102 tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
-  `git diff --check` passed. Importer, tests, and docs are uncommitted.
+  `git diff --check` passed. The folder assessor was pushed as `b4143c1`.
 - Manual verification in Warp: the built-in folder command matched the
   shell-loop baseline with DKIM off. It assessed 12 emails, flagged two for
   review, and reported zero import failures.
-- Next: review and commit the folder assessment changes.
+- Follow-up from clean `main` at `b4143c1`: added `--review-only` for folder
+  text reports. It keeps review findings and import errors visible and counts
+  the whole batch. The extended regression failed before implementation, then
+  all 102 tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Importer, test, and docs are uncommitted.
+- Manual verification in Warp: the review filter displayed only the two
+  review reports and retained the full batch count of 12 assessed, two
+  requiring review, and zero import failures. DKIM was off.
+- Next: review and commit the review-only folder filter.

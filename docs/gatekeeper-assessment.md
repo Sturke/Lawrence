@@ -202,3 +202,7 @@ directly inside the folder in filename order. One failed import is reported
 alongside the other results. Text mode prints per-file reports and a summary.
 JSON mode prints a single object containing `results` and `summary`.
 Check the failure count even when the batch command completes successfully.
+
+Add `--review-only` to a folder assessment with `--format text` to show
+only messages requiring review and import errors. The summary still counts
+all files assessed in the batch.

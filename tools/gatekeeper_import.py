@@ -135,6 +135,11 @@ def assess_folder(args):
         print(json.dumps({"results": results, "summary": summary}))
         return
     for result in results:
+        if (
+            args.review_only and "assessment" in result
+            and result["assessment"]["disposition"] != "review_required"
+        ):
+            continue
         print(f'=== {json.dumps(result["file"])} ===')
         if "error" in result:
             print(f'Import failed: {json.dumps(result["error"])}')
@@ -167,7 +172,13 @@ def main(argv=None):
     parser.add_argument(
         "--format", choices=("json", "text"), help="Assessment output format (default: json)",
     )
+    parser.add_argument(
+        "--review-only", action="store_true",
+        help="Show only review findings and import errors in folder text reports",
+    )
     args = parser.parse_args(argv)
+    if args.review_only and (args.folder is None or args.format != "text"):
+        parser.error("--review-only requires --folder and --format text")
     if args.format is not None and not args.assess:
         parser.error("--format requires --assess")
     if args.verify_dkim and not args.assess:
