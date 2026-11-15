@@ -61,15 +61,17 @@
   because at least one usable header domain was unavailable. Both HTML
   bodies yielded zero eligible links.
 - The manual test guide and status update were committed as `16cb190`.
-- Active milestone — Gatekeeper v0.5 recognizes supported account sign-in
-  notice subjects and quotes the subject as unverified evidence in
-  `recognized`. Existing risk findings still determine the disposition.
+- Completed milestone — [Gatekeeper Email Assessment v0.5](gatekeeper-assessment.md)
+  was committed as `401f5e4` and pushed to GitHub’s `main` branch. It
+  recognizes supported account sign-in notice subjects and quotes the subject
+  as unverified evidence in `recognized`. Risk findings determine disposition.
 - Started from clean `main` at `16cb190`, aligned with `origin/main`.
-  The assessment code, tests, guide, and this handoff are uncommitted.
+  At closeout, `main` and `origin/main` pointed to `401f5e4`.
 - Both new acceptance tests initially failed because `recognized` was missing.
   After implementation, `.venv/bin/python -m pytest -q` passed all 84 tests.
   `git diff --check` passed.
 - Manual v0.5 verification in Warp: the saved Apple Mail export returned
   `account_sign_in_notice` with an unverified subject excerpt. The risk
   disposition was `inconclusive` with no findings.
-- Next: review and commit the v0.5 changes.
+- Proposed next step for v0.6: extract the service and any explicitly stated
+  sign-in method from supported notice subjects as unverified details.
