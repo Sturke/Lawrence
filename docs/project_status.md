@@ -119,6 +119,20 @@
   `.venv/bin/python -m pytest -q`. The test covers exact and same-domain
   non-matches, unverified status despite a claimed authentication pass, and
   preservation of the risk verdict. `git diff --check` passed.
-- Next: store user approvals in SQLite and provide commands to add, list,
-  and remove them. A trusted authentication source and positive trust
+- Manual v0.9 verification in Warp: the saved Apple export matched the
+  address only when supplied with `--approved-sender`. Both runs reported
+  the sender as unverified.
+- The v0.9 checkpoint was closed in `d0c933e`.
+- Active milestone — Gatekeeper v0.10 stores explicit sender approvals in
+  SQLite and supports approving, listing, and removing addresses.
+- Started from clean `main` at `d0c933e`. The store, sender command, importer,
+  assessment, tests, guide, and status update are uncommitted.
+- The new test initially failed because the sender command was absent.
+  After implementation, `.venv/bin/python -m pytest -q` passed all 91 tests.
+  The test confirms persistence across imports, removal, and unverified
+  status for an approved address. `git diff --check` passed.
+- Manual v0.10 verification in Warp: the saved Apple export matched its
+  SQLite approval without a per-run option. Sender status was `unverified`
+  and risk disposition was `inconclusive`.
+- Next: review and commit. A trusted authentication source and positive trust
   decision remain future work.

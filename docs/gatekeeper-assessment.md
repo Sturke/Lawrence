@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.9
+# Gatekeeper Email Assessment v0.10
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -118,3 +118,17 @@ A match remains `unverified` because saved email currently supplies no
 authentication evidence that Gatekeeper trusts. This includes authentication
 results written in the exported message. Sender trust is reported separately
 from the existing risk disposition.
+
+
+To persist an approval, use the sender management commands. They share the
+importer's default SQLite database. For an isolated test, pass the same
+`--database` path to both tools.
+
+```bash
+.venv/bin/python -m tools.gatekeeper_senders approve notices@example.com
+.venv/bin/python -m tools.gatekeeper_senders list
+.venv/bin/python -m tools.gatekeeper_senders remove notices@example.com
+```
+
+Approvals store the exact address and its UTC approval time. Assessments
+consult saved approvals along with any addresses supplied for that command.

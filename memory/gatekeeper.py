@@ -2,6 +2,11 @@
 
 import sqlite3
 from contextlib import closing
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+DEFAULT_DATABASE = Path("~/Library/Application Support/Butler/gatekeeper.sqlite3")
 
 
 class MessageStore:
@@ -26,6 +31,35 @@ class MessageStore:
                         received_at TEXT NOT NULL
                     )
                 """)
+
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS gatekeeper_sender_approvals (
+                        address TEXT NOT NULL PRIMARY KEY,
+                        approved_at TEXT NOT NULL
+                    )
+                """)
+
+    def approve_sender(self, address):
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            connection.execute(
+                """INSERT INTO gatekeeper_sender_approvals (address, approved_at)
+                   VALUES (?, ?) ON CONFLICT(address) DO NOTHING""",
+                (address, datetime.now(UTC).isoformat()),
+            )
+
+    def list_approved_senders(self):
+        with closing(sqlite3.connect(self.database_path)) as connection:
+            connection.row_factory = sqlite3.Row
+            return [dict(row) for row in connection.execute(
+                "SELECT address, approved_at FROM gatekeeper_sender_approvals ORDER BY address"
+            )]
+
+    def remove_sender_approval(self, address):
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            cursor = connection.execute(
+                "DELETE FROM gatekeeper_sender_approvals WHERE address = ?", (address,)
+            )
+            return cursor.rowcount > 0
 
     def save_message(self, *, sender, subject, body, received_at):
         """Save an email and return its local ID.

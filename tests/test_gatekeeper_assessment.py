@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.9"
+    assert record["version"] == "0.10"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -89,7 +89,7 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.9"
+    assert record["version"] == "0.10"
     assert record["checks"]["reply_to_domains"] == {"status": "compared"}
     assert record["findings"] == []
 
@@ -283,3 +283,37 @@ def test_listed_sender_claim_remains_unverified(tmp_path, capsys):
             "reason": "trusted_authentication_unavailable",
         }
         assert record["disposition"] == "review_required"
+
+
+def test_saved_sender_approval_survives_imports_and_can_be_removed(tmp_path, capsys):
+    from tools.gatekeeper_senders import main as manage_senders
+
+    database = ["--database", str(tmp_path / "messages.sqlite3")]
+    source = tmp_path / "notice.eml"
+    source.write_text(
+        "From: Notices <notices@example.com>\n"
+        "Date: Sat, 14 Nov 2026 10:00:00 -0600\n"
+        "Subject: Meeting notes\n\nSee you tomorrow.\n",
+        encoding="utf-8",
+    )
+    assessment = [str(source), "--assess", *database]
+    main(assessment)
+    assert not json.loads(capsys.readouterr().out)["sender_trust"]["approved_address_match"]
+
+    manage_senders([*database, "approve", "notices@example.com"])
+    capsys.readouterr()
+    manage_senders([*database, "list"])
+    (approval,) = json.loads(capsys.readouterr().out)
+    assert approval["address"] == "notices@example.com"
+    assert approval["approved_at"]
+
+    main(assessment)
+    record = json.loads(capsys.readouterr().out)
+    assert record["message_id"] == 2
+    assert record["sender_trust"]["approved_address_match"]
+    assert record["sender_trust"]["status"] == "unverified"
+
+    manage_senders([*database, "remove", "notices@example.com"])
+    capsys.readouterr()
+    main(assessment)
+    assert not json.loads(capsys.readouterr().out)["sender_trust"]["approved_address_match"]

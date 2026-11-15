@@ -8,7 +8,7 @@ from email.parser import BytesParser
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from memory.gatekeeper import MessageStore
+from memory.gatekeeper import DEFAULT_DATABASE, MessageStore
 from verification.email_assessment import assess_email
 
 
@@ -85,7 +85,7 @@ def main(argv=None):
     parser.add_argument("email", type=Path, help="Path to a saved .eml file")
     parser.add_argument(
         "--database", type=Path,
-        default=Path("~/Library/Application Support/Butler/gatekeeper.sqlite3"),
+        default=DEFAULT_DATABASE,
         help="SQLite file (default: ~/Library/Application Support/Butler/gatekeeper.sqlite3)",
     )
     parser.add_argument("--assess", action="store_true", help="Emit a JSON review record")
@@ -102,12 +102,16 @@ def main(argv=None):
         message = read_email(args.email.expanduser(), domains=domains)
         database = args.database.expanduser()
         database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        message_id = MessageStore(database).save_message(**message)
+        store = MessageStore(database)
+        if args.assess:
+            approved_senders = set(args.approved_sender)
+            approved_senders.update(row["address"] for row in store.list_approved_senders())
+        message_id = store.save_message(**message)
     except (OSError, ValueError, sqlite3.Error) as error:
         parser.exit(1, f"Import failed: {error}\n")
     if args.assess:
         record = assess_email(
-            message_id, message, approved_senders=args.approved_sender, **domains
+            message_id, message, approved_senders=approved_senders, **domains
         )
         print(json.dumps(record))
     else:

@@ -185,7 +185,7 @@ def assess_email(
         })
 
     return {
-        "version": "0.9",
+        "version": "0.10",
         "sender_trust": {
             "claimed_address": claimed_address,
             "approved_address_match": claimed_address in approved_senders,
