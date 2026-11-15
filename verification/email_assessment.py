@@ -29,12 +29,13 @@ ACCOUNT_SIGN_IN_SUBJECT = re.compile(
 )
 
 PASSWORD_RESET_SUBJECT = re.compile(
-    r"(?:password reset request(?:ed)?|reset your password)[.!]?",
+    r"(?:password reset request(?:ed)?|reset (?:your )?password)[.!]?",
     re.IGNORECASE,
 )
 
 PASSWORD_CHANGE_SUBJECT = re.compile(
-    r"(?:your password (?:was|has been) changed|password changed|your password has been updated)[.!]?",
+    r"(?:your password (?:was|has been) changed|password changed|your password has been updated"
+    r"|your (?:[\w-]+ ){1,5}password has been changed)[.!]?",
     re.IGNORECASE,
 )
 

@@ -218,5 +218,18 @@
   change exports both imported, authenticated their respective domains via
   DKIM, and reported skipped plain-text body checks. Both risk verdicts were
   inconclusive and neither subject was recognized.
-- Next: review and commit the HTML-only import changes. Then verify the
-  exact subjects and use them as recognition regression cases.
+- HTML-only import was pushed as `a375a4f`.
+- Follow-up from clean `main` at `a375a4f`: recognize the confirmed subjects
+  “Reset Password” and “Your Instagram password has been changed”. Both
+  regression tests failed before implementation. Afterward all 99 tests
+  passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`, and
+  `git diff --check` passed. The code, tests, and docs are uncommitted.
+- Generalized the password-change recognition rule to accept one to five
+  service words in “Your <service> password has been changed”. Tests cover
+  another service and exclude help subjects. All 100 tests passed, and
+  `git diff --check` passed.
+- Manual verification in Warp: the two saved HTML-only originals now
+  report password reset and password change respectively. Both domains
+  authenticated via DKIM, risk was inconclusive, and both reports showed
+  the skipped plain-text body check.
+- Next: review and commit the subject recognition update.

@@ -457,3 +457,31 @@ def test_html_only_assesses_subject_and_links_without_body_phrases(tmp_path, cap
         "status": "skipped", "reason": "plain_text_body_unavailable",
     }
     assert MessageStore(database).get_message(record["message_id"])["body"] == ""
+
+
+def test_recognizes_short_reset_subject(tmp_path, capsys):
+    record = assess(tmp_path, capsys, "Reset Password", "See account activity.")
+    (notice,) = record["recognized"]
+    assert notice["category"] == "password_reset_notice"
+    assert notice["evidence"]["excerpt"] == "Reset Password"
+
+
+def test_recognizes_instagram_password_change_subject(tmp_path, capsys):
+    subject = "Your Instagram password has been changed"
+    record = assess(tmp_path, capsys, subject, "See account activity.")
+    (notice,) = record["recognized"]
+    assert notice["category"] == "password_change_notice"
+    assert notice["evidence"]["excerpt"] == subject
+    assert notice["evidence"]["verification_status"] == "unverified"
+
+
+def test_password_change_accepts_other_services_but_not_help_subjects():
+    from verification.email_assessment import assess_email
+
+    for subject, expected in (
+        ("Your Example Cloud password has been changed", ["password_change_notice"]),
+        ("How to check whether your password has been changed", []),
+        ("Your password has been changed: troubleshooting tips", []),
+    ):
+        record = assess_email(1, {"subject": subject, "body": ""})
+        assert [notice["category"] for notice in record["recognized"]] == expected

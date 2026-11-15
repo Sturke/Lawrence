@@ -61,13 +61,13 @@ your account” yields an empty `details` object. The quoted subject is the
 unverified evidence for these extracted values.
 
 `password_reset_notice` matches the complete subject “Password reset request”,
-“Password reset requested”, or “Reset your password”, ignoring case and an
+“Password reset requested”, “Reset your password”, or “Reset Password”, ignoring case and an
 optional final period or exclamation mark. It quotes the subject as unverified
 evidence and returns an empty `details` object.
 
 `password_change_notice` matches “Password changed”, “Your password was
 changed”, “Your password has been changed”, or “Your password has been
-updated” as complete subjects, ignoring case and an optional final period
+updated”, or “Your <service> password has been changed” as complete subjects, ignoring case and an optional final period
 or exclamation mark. It quotes the subject
 as unverified evidence and returns an empty `details` object.
 
