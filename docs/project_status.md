@@ -161,5 +161,12 @@
 - Manual verification in Warp: the text report recognized the iCloud sign-in
   notice, showed the approved address match, authenticated `email.apple.com`
   via DKIM, and reported inconclusive message risk on its own line.
-- Next: validate the saved-email workflow for 1.0 with authenticated,
-  unverified, and review-required messages.
+- Saved-email 1.0 release checks passed in Warp: the Apple export reported
+  an authenticated domain with DKIM enabled and an unverified domain with
+  DKIM omitted, while the address approval matched in both runs. A synthetic
+  credential request returned `review_required` and displayed its finding.
+- Release baseline: clean `main` at `1462106`. The full test suite passed
+  all 93 tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  The release validation notes are uncommitted.
+- Next: review and commit these results, then prepare the saved-email 1.0
+  release notes and version update.
