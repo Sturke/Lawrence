@@ -32,9 +32,15 @@ PASSWORD_RESET_SUBJECT = re.compile(
     re.IGNORECASE,
 )
 
+PASSWORD_CHANGE_SUBJECT = re.compile(
+    r"(?:your password (?:was|has been) changed|password changed)[.!]?",
+    re.IGNORECASE,
+)
+
 NOTICE_SUBJECTS = (
     ("account_sign_in_notice", ACCOUNT_SIGN_IN_SUBJECT),
     ("password_reset_notice", PASSWORD_RESET_SUBJECT),
+    ("password_change_notice", PASSWORD_CHANGE_SUBJECT),
 )
 
 
@@ -178,7 +184,7 @@ def assess_email(
         })
 
     return {
-        "version": "0.7",
+        "version": "0.8",
         "recognized": recognized,
         "message_id": message_id,
         "disposition": "review_required" if findings else "inconclusive",

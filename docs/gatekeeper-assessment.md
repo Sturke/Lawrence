@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.7
+# Gatekeeper Email Assessment v0.8
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -45,6 +45,11 @@ unverified evidence for these extracted values.
 “Password reset requested”, or “Reset your password”, ignoring case and an
 optional final period or exclamation mark. It quotes the subject as unverified
 evidence and returns an empty `details` object.
+
+`password_change_notice` matches “Password changed”, “Your password was
+changed”, or “Your password has been changed” as complete subjects, ignoring
+case and an optional final period or exclamation mark. It quotes the subject
+as unverified evidence and returns an empty `details` object.
 
 ## Phrase checks
 

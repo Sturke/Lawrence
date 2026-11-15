@@ -98,4 +98,14 @@
   routine password email was correctly left unlabeled. After implementation
   `.venv/bin/python -m pytest -q` passed all 88 tests and `git diff --check`
   passed. Tests use synthetic saved emails.
-- Next: review and commit this checkpoint update.
+- The v0.7 checkpoint was closed in `7e364f0`.
+- Active milestone — Gatekeeper v0.8 recognizes supported password change
+  subjects separately from password reset requests and quotes the subject
+  as unverified evidence.
+- Started from clean `main` at `7e364f0`, aligned with `origin/main`.
+  The assessment code, tests, guide, and status update are uncommitted.
+- The new saved-email test initially failed because v0.7 had no recognition
+  for password changes. After implementation, `.venv/bin/python -m pytest -q`
+  passed all 89 tests and `git diff --check` passed. Verification used a
+  synthetic saved email.
+- Next: review and commit the v0.8 changes.
