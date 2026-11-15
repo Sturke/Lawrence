@@ -64,6 +64,10 @@ def format_email_report(record):
             displayed = _terminal_text(evidence["displayed_domain"])
             destination = _terminal_text(evidence["destination_domain"])
             lines.append(f"    Displayed: {displayed} | Destination: {destination}")
+        elif finding["category"] == "reply_to_domain_mismatch":
+            from_domain = _terminal_text(evidence["from_domain"])
+            reply_to_domain = _terminal_text(evidence["reply_to_domain"])
+            lines.append(f"    From: {from_domain} | Reply-To: {reply_to_domain}")
         elif evidence.get("field") in PHRASE_SOURCES and "excerpt" in evidence:
             source = PHRASE_SOURCES[evidence["field"]]
             excerpt = _terminal_text(evidence["excerpt"])

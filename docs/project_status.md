@@ -246,5 +246,11 @@
   source and matched excerpt for phrase findings. Both focused tests failed
   before the change and passed after it. The full suite passed all 100
   tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. The phrase evidence display was pushed as
+  `ea2cc06`.
+- Follow-up from clean `main` at `ea2cc06`: the text report shows both
+  domains beneath a Reply-To mismatch finding. The synthetic saved-email
+  regression failed before the formatter update. Afterward, all 100 tests
+  passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`, and
   `git diff --check` passed. Formatter, tests, and docs are uncommitted.
-- Next: review and commit the phrase evidence display.
+- Next: review and commit the Reply-To evidence display.

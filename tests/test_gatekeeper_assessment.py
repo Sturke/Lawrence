@@ -72,6 +72,12 @@ def test_reply_to_domain_mismatch_requires_review(tmp_path, capsys):
     assert finding["evidence"]["from_domain"] == "example.com"
     assert finding["evidence"]["reply_to_domain"] == "example.org"
 
+    main([str(source), "--database", str(database), "--assess", "--format", "text"])
+    output = capsys.readouterr().out
+    assert "Message risk: Review required" in output
+    assert "From: example.com | Reply-To: example.org" in output
+
+
 def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     source = tmp_path / "reply-to-mismatch.eml"
     source.write_text(
