@@ -15,7 +15,7 @@ def assess(tmp_path, capsys, subject, body):
     database = tmp_path / "messages.sqlite3"
     main([str(source), "--database", str(database), "--assess"])
     record = json.loads(capsys.readouterr().out)
-    assert record["version"] == "0.2"
+    assert record["version"] == "0.3"
     assert MessageStore(database).get_message(record["message_id"])["body"] == body
     assert record["confidence"] == "low"
     assert record["reason"]
@@ -88,5 +88,55 @@ def test_matching_reply_to_domain_does_not_require_review(tmp_path, capsys):
     record = json.loads(capsys.readouterr().out)
 
     assert record["disposition"] == "inconclusive"
-    assert record["version"] == "0.2"
+    assert record["version"] == "0.3"
+    assert record["findings"] == []
+
+def test_link_domain_mismatch_requires_review(tmp_path, capsys):
+    from email.message import EmailMessage
+
+    email = EmailMessage()
+    email["From"] = "Notices <notices@example.com>"
+    email["Date"] = "Sat, 14 Nov 2026 10:00:00 -0600"
+    email["Subject"] = "Meeting notes"
+    email.set_content("See you tomorrow.")
+    email.add_alternative(
+        '<p>Meeting details at <a href="https://example.org/">example.com</a>.</p>',
+        subtype="html",
+    )
+
+    source = tmp_path / "link-mismatch.eml"
+    source.write_bytes(email.as_bytes())
+    database = tmp_path / "messages.sqlite3"
+
+    main([str(source), "--database", str(database), "--assess"])
+    record = json.loads(capsys.readouterr().out)
+
+    assert record["disposition"] == "review_required"
+    (finding,) = record["findings"]
+    assert finding["category"] == "link_domain_mismatch"
+    assert finding["confidence"] == "low"
+    assert finding["evidence"]["displayed_domain"] == "example.com"
+    assert finding["evidence"]["destination_domain"] == "example.org"
+
+def test_matching_link_domain_does_not_require_review(tmp_path, capsys):
+    from email.message import EmailMessage
+
+    email = EmailMessage()
+    email["From"] = "Notices <notices@example.com>"
+    email["Date"] = "Sat, 14 Nov 2026 10:00:00 -0600"
+    email["Subject"] = "Meeting notes"
+    email.set_content("See you tomorrow.")
+    email.add_alternative(
+        '<p>Meeting details at <a href="https://example.com/">example.com</a>.</p>',
+        subtype="html",
+    )
+
+    source = tmp_path / "link-mismatch.eml"
+    source.write_bytes(email.as_bytes())
+    database = tmp_path / "messages.sqlite3"
+
+    main([str(source), "--database", str(database), "--assess"])
+    record = json.loads(capsys.readouterr().out)
+
+    assert record["disposition"] == "inconclusive"
     assert record["findings"] == []

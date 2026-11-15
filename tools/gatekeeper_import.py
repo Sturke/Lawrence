@@ -41,6 +41,12 @@ def read_email(path, *, domains=None):
     if domains is not None:
         domains["from_domain"] = single_address_domain(message, "From")
         domains["reply_to_domain"] = single_address_domain(message, "Reply-To")
+        html_part = message.get_body(preferencelist=("html",))
+        if html_part is not None:
+            try:
+                domains["html_body"] = html_part.get_content()
+            except (LookupError, UnicodeError):
+                domains["html_body"] = None
     if not sender:
         raise ValueError("Email must have a From header")
     try:

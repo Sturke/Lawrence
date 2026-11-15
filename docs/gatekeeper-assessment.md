@@ -1,4 +1,4 @@
-# Gatekeeper Email Assessment v0.2
+# Gatekeeper Email Assessment v0.3
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
@@ -26,6 +26,13 @@ domains differ, the assessment returns `review_required` with a low-confidence
 
 Matching domains produce no mismatch finding. If either domain is unavailable,
 Gatekeeper skips this check.
+
+For a local `.eml` with both a plain-text body and an HTML alternative,
+Gatekeeper compares links whose entire label is a domain name with their
+HTTP or HTTPS destination hostnames. The comparison ignores case. A mismatch
+produces a low-confidence `link_domain_mismatch` finding with
+`displayed_domain` and `destination_domain` as unverified evidence. The check
+reads the HTML locally without rendering it or opening links.
 
 The record includes `version`, the stored `message_id`, `disposition`,
 `confidence`, `reason`, `findings`, and `limitations`. The `version` field identifies the assessment rules used to produce the record. A match yields
