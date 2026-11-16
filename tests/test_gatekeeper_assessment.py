@@ -590,3 +590,35 @@ def test_review_mark_is_specific_to_saved_message_and_finding(tmp_path, capsys):
     main([*batch, "--format", "text", "--review-only"])
     output = capsys.readouterr().out
     assert '"first.eml"' in output and output.count("Credential request:") == 2
+
+
+def test_saved_review_queue_works_after_original_is_removed(tmp_path, capsys):
+    source = tmp_path / "notice.eml"
+    source.write_text(
+        "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+        "Subject: Notice\n\nVerify your password."
+    )
+    database = ["--database", str(tmp_path / "review.db")]
+    for _ in range(2):
+        main([str(source), "--assess", *database])
+        assessment = json.loads(capsys.readouterr().out)
+    review_id = assessment["findings"][0]["review_id"]
+    source.unlink()
+
+    main(["--review-queue", *database])
+    (entry,) = json.loads(capsys.readouterr().out)["results"]
+    assert entry["file"] == "notice.eml"
+    assert entry["assessment"]["message_id"] == 2
+    assert entry["assessment"]["findings"][0]["review_id"] == review_id
+
+    main(["--mark-reviewed", review_id, *database])
+    capsys.readouterr()
+    main(["--review-queue", *database])
+    assert json.loads(capsys.readouterr().out)["results"] == []
+
+    main(["--reopen-review", review_id, *database])
+    capsys.readouterr()
+    main(["--review-queue", "--format", "text", *database])
+    output = capsys.readouterr().out
+    assert "notice.eml" in output and review_id in output
+    assert "Review queue: 1 message with pending findings." in output

@@ -1,5 +1,6 @@
 """Local persistence for Gatekeeper's email messages."""
 
+import json
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
@@ -45,6 +46,47 @@ class MessageStore:
                         reviewed_at TEXT
                     )
                 """)
+
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS gatekeeper_review_snapshots (
+                        message_digest TEXT NOT NULL PRIMARY KEY,
+                        message_id INTEGER NOT NULL,
+                        filename TEXT NOT NULL,
+                        assessment TEXT NOT NULL
+                    )
+                """)
+
+    def save_review_snapshot(self, message_digest, filename, record):
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            connection.execute(
+                """INSERT INTO gatekeeper_review_snapshots
+                   (message_digest, message_id, filename, assessment) VALUES (?, ?, ?, ?)
+                   ON CONFLICT(message_digest) DO UPDATE SET
+                       message_id = excluded.message_id,
+                       filename = excluded.filename,
+                       assessment = excluded.assessment
+                   WHERE excluded.message_id > gatekeeper_review_snapshots.message_id""",
+                (message_digest, record["message_id"], filename, json.dumps(record)),
+            )
+
+    def pending_review_snapshots(self):
+        with closing(sqlite3.connect(self.database_path)) as connection:
+            connection.execute("BEGIN")
+            reviewed = {row[0] for row in connection.execute(
+                "SELECT review_id FROM gatekeeper_finding_reviews WHERE reviewed_at IS NOT NULL"
+            )}
+            results = []
+            for filename, assessment in connection.execute(
+                "SELECT filename, assessment FROM gatekeeper_review_snapshots ORDER BY message_id"
+            ):
+                record = json.loads(assessment)
+                pending = [
+                    dict(finding, reviewed_at=None)
+                    for finding in record["findings"] if finding["review_id"] not in reviewed
+                ]
+                if pending:
+                    results.append({"file": filename, "assessment": dict(record, findings=pending)})
+            return results
 
     def finding_review_states(self, review_ids):
         with closing(sqlite3.connect(self.database_path)) as connection, connection:

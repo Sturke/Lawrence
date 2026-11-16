@@ -127,6 +127,7 @@ def import_one(path, args):
             message_id, message, approved_senders=approved_senders, **domains
         )
         add_finding_review_states(record, message_digest, store)
+        store.save_review_snapshot(message_digest, path.name, record)
     return message_id, record
 
 
@@ -185,6 +186,7 @@ def main(argv=None):
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
     inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
+    inputs.add_argument("--review-queue", action="store_true", help="Show saved pending findings")
     inputs.add_argument("--mark-reviewed", metavar="ID", help="Mark one known finding reviewed")
     inputs.add_argument("--reopen-review", metavar="ID", help="Reopen one known finding")
     parser.add_argument(
@@ -208,12 +210,30 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.review_only and (args.folder is None or args.format != "text"):
         parser.error("--review-only requires --folder and --format text")
-    if args.format is not None and not args.assess:
-        parser.error("--format requires --assess")
+    if args.format is not None and not (args.assess or args.review_queue):
+        parser.error("--format requires --assess or --review-queue")
     if args.verify_dkim and not args.assess:
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.review_queue:
+        if args.assess:
+            parser.error("--review-queue cannot be combined with --assess")
+        database = args.database.expanduser()
+        try:
+            results = MessageStore(database).pending_review_snapshots() if database.exists() else []
+        except (OSError, ValueError, sqlite3.Error) as error:
+            parser.exit(1, f"Review queue failed: {error}\n")
+        if args.format == "text":
+            for result in results:
+                print(f'=== {json.dumps(result["file"])} ===')
+                print(format_email_report(result["assessment"]))
+                print()
+            noun = "message" if len(results) == 1 else "messages"
+            print(f"Review queue: {len(results)} {noun} with pending findings.")
+        else:
+            print(json.dumps({"results": results, "pending_messages": len(results)}))
+        return
     if args.mark_reviewed is not None or args.reopen_review is not None:
         if args.assess:
             parser.error("Review actions cannot be combined with --assess")

@@ -228,3 +228,10 @@ Review state follows byte-identical copies of the saved email in the same
 database. A changed export or different finding can have a new ID. Marking a
 finding reviewed records a local review decision. It does not change the
 assessment verdict.
+
+Open the saved queue with `--review-queue --format text` and the same database.
+It shows pending findings from the latest saved assessment of each distinct
+email, including messages assessed individually. Opening it does not reread
+the emails, import new rows, or rerun DKIM. An older database needs one
+assessment run to populate the saved queue. The queue reflects the evidence
+and settings from the last assessment, with current review marks applied.

@@ -302,4 +302,14 @@
   it appeared as pending while the first stayed hidden. MissionSquare
   remained pending and the original verdict totals stayed at 12 assessed,
   two requiring review, and zero import failures.
-- Next: review and commit the local finding review workflow.
+- Finding review tracking was pushed as `24bc2be`.
+- Follow-up from clean `main` at `24bc2be`: save the latest assessment for
+  each distinct email and expose pending findings via `--review-queue`.
+  The new regression failed before implementation and now verifies the
+  queue after removing the original, deduplication, marking, and reopening.
+  All 104 tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Store, importer, tests, and docs are uncommitted.
+- Manual verification in Warp: after assessing the 12-email folder, the
+  saved queue opened with only its database path and showed the MissionSquare
+  and TreasuryDirect reports, two messages with pending findings.
+- Next: review and commit the saved queue changes.
