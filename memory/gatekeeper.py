@@ -23,6 +23,7 @@ class MessageStore:
             raise ValueError("MessageStore requires a persistent database file path")
         with closing(sqlite3.connect(self.database_path)) as connection:
             with connection:
+                connection.execute("BEGIN IMMEDIATE")
                 connection.execute("""
                     CREATE TABLE IF NOT EXISTS gatekeeper_messages (
                         id INTEGER PRIMARY KEY,
@@ -43,9 +44,14 @@ class MessageStore:
                 connection.execute("""
                     CREATE TABLE IF NOT EXISTS gatekeeper_finding_reviews (
                         review_id TEXT NOT NULL PRIMARY KEY,
-                        reviewed_at TEXT
+                        reviewed_at TEXT,
+                        review_note TEXT
                     )
                 """)
+
+                columns = connection.execute("PRAGMA table_info(gatekeeper_finding_reviews)")
+                if "review_note" not in {row[1] for row in columns}:
+                    connection.execute("ALTER TABLE gatekeeper_finding_reviews ADD COLUMN review_note TEXT")
 
                 connection.execute("""
                     CREATE TABLE IF NOT EXISTS gatekeeper_review_snapshots (
@@ -72,24 +78,30 @@ class MessageStore:
     def review_snapshots(self, *, show_reviewed=False):
         with closing(sqlite3.connect(self.database_path)) as connection:
             connection.execute("BEGIN")
-            reviewed = dict(connection.execute(
-                "SELECT review_id, reviewed_at FROM gatekeeper_finding_reviews WHERE reviewed_at IS NOT NULL"
-            ))
+            reviewed = {
+                review_id: (timestamp, note)
+                for review_id, timestamp, note in connection.execute(
+                    "SELECT review_id, reviewed_at, review_note FROM gatekeeper_finding_reviews "
+                    "WHERE reviewed_at IS NOT NULL"
+                )
+            }
             results = []
             for filename, assessment in connection.execute(
                 "SELECT filename, assessment FROM gatekeeper_review_snapshots ORDER BY message_id"
             ):
                 record = json.loads(assessment)
-                findings = [
-                    dict(finding, reviewed_at=reviewed.get(finding["review_id"]))
-                    for finding in record["findings"]
-                    if (finding["review_id"] in reviewed) == show_reviewed
-                ]
+                findings = []
+                for finding in record["findings"]:
+                    review_id = finding["review_id"]
+                    if (review_id in reviewed) != show_reviewed:
+                        continue
+                    timestamp, note = reviewed.get(review_id, (None, None))
+                    findings.append(dict(finding, reviewed_at=timestamp, review_note=note))
                 if findings:
                     results.append({"file": filename, "assessment": dict(record, findings=findings)})
             return results
 
-    def mark_message_reviewed(self, message_id):
+    def mark_message_reviewed(self, message_id, *, note=None):
         """Mark pending findings on the selected current snapshot."""
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -101,9 +113,9 @@ class MessageStore:
                 return None
             timestamp = datetime.now(UTC).isoformat()
             cursor = connection.executemany(
-                """UPDATE gatekeeper_finding_reviews SET reviewed_at = ?
+                """UPDATE gatekeeper_finding_reviews SET reviewed_at = ?, review_note = ?
                    WHERE review_id = ? AND reviewed_at IS NULL""",
-                ((timestamp, item["review_id"]) for item in json.loads(row[0])["findings"]),
+                ((timestamp, note, item["review_id"]) for item in json.loads(row[0])["findings"]),
             )
             return cursor.rowcount
 
@@ -115,20 +127,22 @@ class MessageStore:
             )
             return {
                 review_id: connection.execute(
-                    "SELECT reviewed_at FROM gatekeeper_finding_reviews WHERE review_id = ?",
+                    "SELECT reviewed_at, review_note FROM gatekeeper_finding_reviews WHERE review_id = ?",
                     (review_id,),
-                ).fetchone()[0]
+                ).fetchone()
                 for review_id in review_ids
             }
 
-    def set_finding_reviewed(self, review_id, reviewed):
+    def set_finding_reviewed(self, review_id, reviewed, *, note=None):
         timestamp = datetime.now(UTC).isoformat() if reviewed else None
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
             cursor = connection.execute(
                 """UPDATE gatekeeper_finding_reviews SET reviewed_at =
-                   CASE WHEN ? IS NULL THEN NULL ELSE COALESCE(reviewed_at, ?) END
+                   CASE WHEN ? IS NULL THEN NULL ELSE COALESCE(reviewed_at, ?) END,
+                   review_note = CASE WHEN ? IS NULL THEN NULL
+                                      WHEN reviewed_at IS NULL THEN ? ELSE review_note END
                    WHERE review_id = ?""",
-                (timestamp, timestamp, review_id),
+                (timestamp, timestamp, timestamp, note, review_id),
             )
             return cursor.rowcount > 0
 

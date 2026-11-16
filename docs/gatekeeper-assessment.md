@@ -253,3 +253,8 @@ saved assessment. The report includes each finding's Review ID and UTC
 review timestamp. Reopening an individual finding moves it back to the
 pending queue. A message can appear in both views if it has both kinds
 of findings.
+
+Add `--review-note "your reason"` when marking a finding or a whole message
+reviewed. Whole-message review saves the note on each newly reviewed finding.
+The reviewed view shows the note. Repeating a mark preserves the existing
+note, and reopening clears it along with the current review timestamp.

@@ -63,6 +63,8 @@ def format_email_report(record):
             timestamp = finding["reviewed_at"]
             state = f"reviewed at {timestamp}" if timestamp else "pending"
             lines.append(f'    Review ID: {finding["review_id"]} ({state})')
+            if finding.get("review_note"):
+                lines.append(f'    Review note: {_terminal_text(finding["review_note"])}')
         evidence = finding["evidence"]
         if finding["category"] == "link_domain_mismatch":
             displayed = _terminal_text(evidence["displayed_domain"])

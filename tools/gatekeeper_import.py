@@ -107,7 +107,8 @@ def add_finding_review_states(record, message_digest, store):
     if review_ids:
         states = store.finding_review_states(review_ids)
         for finding, review_id in zip(record["findings"], review_ids, strict=True):
-            finding.update(review_id=review_id, reviewed_at=states[review_id])
+            timestamp, note = states[review_id]
+            finding.update(review_id=review_id, reviewed_at=timestamp, review_note=note)
 
 
 def import_one(path, args):
@@ -212,7 +213,10 @@ def main(argv=None):
         "--review-only", action="store_true",
         help="Show only review findings and import errors in folder text reports",
     )
+    parser.add_argument("--review-note", help="Local note to save when marking findings reviewed")
     args = parser.parse_args(argv)
+    if args.review_note is not None and args.mark_reviewed is None and args.mark_message_reviewed is None:
+        parser.error("--review-note requires --mark-reviewed or --mark-message-reviewed")
     if args.review_only and (args.folder is None or args.format != "text"):
         parser.error("--review-only requires --folder and --format text")
     if args.format is not None and not (args.assess or args.review_queue or args.reviewed):
@@ -253,7 +257,9 @@ def main(argv=None):
         database = args.database.expanduser()
         try:
             count = (
-                MessageStore(database).mark_message_reviewed(args.mark_message_reviewed)
+                MessageStore(database).mark_message_reviewed(
+                    args.mark_message_reviewed, note=args.review_note
+                )
                 if database.is_file() else None
             )
         except (OSError, ValueError, OverflowError, sqlite3.Error) as error:
@@ -270,7 +276,7 @@ def main(argv=None):
         database = args.database.expanduser()
         try:
             found = database.is_file() and MessageStore(database).set_finding_reviewed(
-                review_id, args.mark_reviewed is not None
+                review_id, args.mark_reviewed is not None, note=args.review_note
             )
         except (OSError, ValueError, sqlite3.Error) as error:
             parser.exit(1, f"Review update failed: {error}\n")

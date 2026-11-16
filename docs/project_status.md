@@ -331,4 +331,13 @@
 - Manual verification in Warp: the reviewed view showed both TreasuryDirect
   findings with their UTC review timestamps. MissionSquare was absent because
   its finding was still pending.
-- Next: review and commit the saved reviewed view.
+- The saved reviewed view was pushed as `9176cef`.
+- Follow-up from clean `main` at `9176cef`: add optional local review notes
+  to finding and message review, display them in text and JSON, and
+  migrate older review tables. The extended regression failed before the
+  option existed. All 105 tests passed afterward with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: the existing SQLite database retained the
+  earlier TreasuryDirect review timestamps. Marking MissionSquare with
+  a note displayed that note only on its reviewed finding.
+- Next: review and commit the review-note changes.

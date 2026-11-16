@@ -640,7 +640,7 @@ def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
             capsys.readouterr()
 
     message_id = str(first["message_id"])
-    main(["--mark-message-reviewed", message_id, *database])
+    main(["--mark-message-reviewed", message_id, "--review-note", "Checked locally", *database])
     assert "2 findings marked reviewed." in capsys.readouterr().out
     main(["--mark-message-reviewed", message_id, *database])
     assert "0 findings marked reviewed." in capsys.readouterr().out
@@ -654,12 +654,14 @@ def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
     assert entry["file"] == "first.eml"
     reviewed = entry["assessment"]["findings"]
     assert len(reviewed) == 2 and all(f["reviewed_at"] for f in reviewed)
+    assert all(f["review_note"] == "Checked locally" for f in reviewed)
     review_id = reviewed[0]["review_id"]
 
     main(["--reviewed", "--format", "text", *database])
     output = capsys.readouterr().out
     assert review_id in output and reviewed[0]["reviewed_at"] in output
     assert "second.eml" not in output
+    assert output.count("Review note: Checked locally") == 2
 
     main(["--reopen-review", review_id, *database])
     capsys.readouterr()
