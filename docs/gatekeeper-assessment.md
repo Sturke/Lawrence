@@ -207,3 +207,24 @@ Check the failure count even when the batch command completes successfully.
 Add `--review-only` to a folder assessment with `--format text` to show
 only messages requiring review and import errors. The summary still counts
 all files assessed in the batch.
+
+## Track reviewed findings
+
+Copy a finding's Review ID from the text report and use the same SQLite
+database for each run:
+
+```bash
+.venv/bin/python -m tools.gatekeeper_import --database "$batch_db" --mark-reviewed REVIEW_ID
+.venv/bin/python -m tools.gatekeeper_import --database "$batch_db" --reopen-review REVIEW_ID
+```
+
+Full assessments keep every finding and its review state. In review-only text
+output, reviewed findings are hidden and a message leaves the queue once all
+its findings have been reviewed. Batch totals still describe the original
+assessment verdicts. The separate queue count shows messages with pending
+findings. Import errors remain visible.
+
+Review state follows byte-identical copies of the saved email in the same
+database. A changed export or different finding can have a new ID. Marking a
+finding reviewed records a local review decision. It does not change the
+assessment verdict.

@@ -59,6 +59,9 @@ def format_email_report(record):
     for finding in record["findings"]:
         label = finding["category"].replace("_", " ").capitalize()
         lines.append(f"  - {label}: {finding['reason']}")
+        if "review_id" in finding:
+            state = "reviewed" if finding["reviewed_at"] else "pending"
+            lines.append(f'    Review ID: {finding["review_id"]} ({state})')
         evidence = finding["evidence"]
         if finding["category"] == "link_domain_mismatch":
             displayed = _terminal_text(evidence["displayed_domain"])

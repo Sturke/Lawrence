@@ -554,3 +554,39 @@ def test_folder_assessment_continues_after_invalid_email(tmp_path, capsys):
     assert "02.eml" in output and "Import failed:" in output
     assert "03.EML" in output and "Review required" in output
     assert "Batch summary: 2 assessed · 1 require review · 1 import failures" in output
+
+
+def test_review_mark_is_specific_to_saved_message_and_finding(tmp_path, capsys):
+    folder = tmp_path / "mail"
+    folder.mkdir()
+    headers = "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+    for name in ("first", "second"):
+        (folder / f"{name}.eml").write_text(
+            headers + f"Subject: {name}\n\nVerify your password. Buy gift cards."
+        )
+    database = ["--database", str(tmp_path / "review.db")]
+    batch = ["--folder", str(folder), "--assess", *database]
+    main(batch)
+    first, second = json.loads(capsys.readouterr().out)["results"]
+    findings = first["assessment"]["findings"]
+    assert findings[0]["review_id"] != second["assessment"]["findings"][0]["review_id"]
+    main(["--mark-reviewed", findings[0]["review_id"], *database])
+    capsys.readouterr()
+    main([*batch, "--format", "text", "--review-only"])
+    output = capsys.readouterr().out
+    assert '"first.eml"' in output and output.count("Credential request:") == 1
+    main(["--mark-reviewed", findings[1]["review_id"], *database])
+    capsys.readouterr()
+    main([*batch, "--format", "text", "--review-only"])
+    output = capsys.readouterr().out
+    assert '"first.eml"' not in output and '"second.eml"' in output
+    main(batch)
+    first, second = json.loads(capsys.readouterr().out)["results"]
+    assert first["assessment"]["disposition"] == "review_required"
+    assert all(f["reviewed_at"] for f in first["assessment"]["findings"])
+    assert all(f["reviewed_at"] is None for f in second["assessment"]["findings"])
+    main(["--reopen-review", findings[0]["review_id"], *database])
+    capsys.readouterr()
+    main([*batch, "--format", "text", "--review-only"])
+    output = capsys.readouterr().out
+    assert '"first.eml"' in output and output.count("Credential request:") == 2

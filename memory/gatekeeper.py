@@ -39,6 +39,38 @@ class MessageStore:
                     )
                 """)
 
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS gatekeeper_finding_reviews (
+                        review_id TEXT NOT NULL PRIMARY KEY,
+                        reviewed_at TEXT
+                    )
+                """)
+
+    def finding_review_states(self, review_ids):
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            connection.executemany(
+                "INSERT OR IGNORE INTO gatekeeper_finding_reviews (review_id) VALUES (?)",
+                ((review_id,) for review_id in review_ids),
+            )
+            return {
+                review_id: connection.execute(
+                    "SELECT reviewed_at FROM gatekeeper_finding_reviews WHERE review_id = ?",
+                    (review_id,),
+                ).fetchone()[0]
+                for review_id in review_ids
+            }
+
+    def set_finding_reviewed(self, review_id, reviewed):
+        timestamp = datetime.now(UTC).isoformat() if reviewed else None
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            cursor = connection.execute(
+                """UPDATE gatekeeper_finding_reviews SET reviewed_at =
+                   CASE WHEN ? IS NULL THEN NULL ELSE COALESCE(reviewed_at, ?) END
+                   WHERE review_id = ?""",
+                (timestamp, timestamp, review_id),
+            )
+            return cursor.rowcount > 0
+
     def approve_sender(self, address):
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
             connection.execute(

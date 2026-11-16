@@ -3,6 +3,8 @@
 import argparse
 import json
 import sqlite3
+from collections import Counter
+from hashlib import sha256
 from email import policy
 from email.parser import BytesParser
 from email.utils import parsedate_to_datetime
@@ -42,6 +44,7 @@ def read_email(path, *, domains=None, verify_dkim=False):
     sender = str(message.get("From", "")).strip()
     html_part = message.get_body(preferencelist=("html",))
     if domains is not None:
+        domains["message_digest"] = sha256(raw).hexdigest()
         from_address = single_mailbox(message, "From")
         reply_to_address = single_mailbox(message, "Reply-To")
         if from_address is not None:
@@ -91,6 +94,22 @@ def import_email(path, store):
     return store.save_message(**read_email(path))
 
 
+def add_finding_review_states(record, message_digest, store):
+    occurrences = Counter()
+    review_ids = []
+    for finding in record["findings"]:
+        evidence = json.dumps(
+            [finding["category"], finding["evidence"]], sort_keys=True
+        )
+        occurrences[evidence] += 1
+        key = json.dumps([message_digest, evidence, occurrences[evidence]])
+        review_ids.append(sha256(key.encode("utf-8")).hexdigest())
+    if review_ids:
+        states = store.finding_review_states(review_ids)
+        for finding, review_id in zip(record["findings"], review_ids, strict=True):
+            finding.update(review_id=review_id, reviewed_at=states[review_id])
+
+
 def import_one(path, args):
     domains = {} if args.assess else None
     message = read_email(path, domains=domains, verify_dkim=args.verify_dkim)
@@ -103,9 +122,11 @@ def import_one(path, args):
     message_id = store.save_message(**message)
     record = None
     if args.assess:
+        message_digest = domains.pop("message_digest")
         record = assess_email(
             message_id, message, approved_senders=approved_senders, **domains
         )
+        add_finding_review_states(record, message_digest, store)
     return message_id, record
 
 
@@ -134,17 +155,20 @@ def assess_folder(args):
     if args.format != "text":
         print(json.dumps({"results": results, "summary": summary}))
         return
+    pending_messages = 0
     for result in results:
-        if (
-            args.review_only and "assessment" in result
-            and result["assessment"]["disposition"] != "review_required"
-        ):
-            continue
+        record = result.get("assessment")
+        if args.review_only and record is not None:
+            pending = [finding for finding in record["findings"] if not finding["reviewed_at"]]
+            if not pending:
+                continue
+            pending_messages += 1
+            record = dict(record, findings=pending)
         print(f'=== {json.dumps(result["file"])} ===')
         if "error" in result:
             print(f'Import failed: {json.dumps(result["error"])}')
         else:
-            print(format_email_report(result["assessment"]))
+            print(format_email_report(record))
         print()
     print(
         f'Batch summary: {summary["assessed"]} assessed · '
@@ -152,12 +176,17 @@ def assess_folder(args):
         f'{summary["import_failures"]} import failures'
     )
 
+    if args.review_only:
+        print(f"Review queue: {pending_messages} messages with pending findings.")
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
     inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
+    inputs.add_argument("--mark-reviewed", metavar="ID", help="Mark one known finding reviewed")
+    inputs.add_argument("--reopen-review", metavar="ID", help="Reopen one known finding")
     parser.add_argument(
         "--database", type=Path,
         default=DEFAULT_DATABASE,
@@ -185,6 +214,21 @@ def main(argv=None):
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.mark_reviewed is not None or args.reopen_review is not None:
+        if args.assess:
+            parser.error("Review actions cannot be combined with --assess")
+        review_id = args.mark_reviewed if args.mark_reviewed is not None else args.reopen_review
+        database = args.database.expanduser()
+        try:
+            found = database.is_file() and MessageStore(database).set_finding_reviewed(
+                review_id, args.mark_reviewed is not None
+            )
+        except (OSError, ValueError, sqlite3.Error) as error:
+            parser.exit(1, f"Review update failed: {error}\n")
+        if not found:
+            parser.exit(1, "Finding ID not found in this database.\n")
+        print("Finding marked reviewed." if args.mark_reviewed is not None else "Finding reopened.")
+        return
     if args.folder is not None:
         if not args.assess:
             parser.error("--folder requires --assess")

@@ -289,4 +289,17 @@
 - Manual Warp verification: the DKIM-enabled report labeled the
   MissionSquare destination as a subdomain and kept both messages in review.
   The batch showed 12 assessed, two requiring review, and zero import failures.
-- Next: review and commit the subdomain label.
+- The subdomain label was pushed as `906f5fe`.
+- Follow-up from clean `main` at `906f5fe`: track individual findings in
+  SQLite, with mark and reopen commands and a pending-only review queue.
+  The saved-email regression failed before review IDs existed and now
+  verifies retention across imports, isolation between messages, and reopening.
+  All 103 tests passed with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Store, importer, formatter, tests, and docs
+  are uncommitted.
+- Manual verification in Warp: marking one TreasuryDirect finding hid
+  only that finding across batch runs. After reopening the other finding,
+  it appeared as pending while the first stayed hidden. MissionSquare
+  remained pending and the original verdict totals stayed at 12 assessed,
+  two requiring review, and zero import failures.
+- Next: review and commit the local finding review workflow.
