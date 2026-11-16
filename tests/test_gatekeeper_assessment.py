@@ -696,3 +696,12 @@ def test_review_history_preserves_notes_across_reopen(tmp_path, capsys):
         ("reviewed", "First review"), ("reopened", None), ("reviewed", "Second review"),
     ]
     assert all(event["timestamp"].endswith("+00:00") for event in history)
+
+    main(["--message-history", "1", *database])
+    message_history = json.loads(capsys.readouterr().out)
+    assert message_history["message_id"] == 1
+    assert message_history["file"] == "notice.eml"
+    (entry,) = message_history["findings"]
+    assert entry["review_id"] == review_id
+    assert entry["category"] == "credential_request"
+    assert entry["events"] == history

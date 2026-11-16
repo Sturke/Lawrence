@@ -350,4 +350,11 @@
 - Manual verification in Warp: reopening the MissionSquare finding on
   the existing test database preserved its original review event and
   note, followed by a new UTC reopen event.
-- Next: review and commit the history changes.
+- Finding review history was pushed as `89fadc3`.
+- Follow-up from clean `main` at `89fadc3`: add message-level history
+  grouped by finding. The extended regression failed before the option
+  existed. All 106 tests passed afterward with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: message history returned both TreasuryDirect
+  link findings with their own evidence and review timestamps.
+- Next: review and commit the store, importer, test, and documentation changes.

@@ -265,3 +265,8 @@ timestamps remain in the history when a finding is reopened. On first use
 with an older database, existing reviewed findings are added with their
 saved dates and notes. Earlier actions no longer present in that database
 cannot be recovered.
+
+Use `--message-history MESSAGE_ID --database "$queue_db"` to see every
+finding on a current saved assessment, with its evidence and review events
+grouped by finding. Use the numeric ID shown in the saved queue or reviewed
+view. Findings with no review actions have an empty events list.

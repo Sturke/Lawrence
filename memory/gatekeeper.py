@@ -99,14 +99,39 @@ class MessageStore:
                     END
                 """)
 
+    @staticmethod
+    def _review_events(connection, review_id):
+        return [dict(row) for row in connection.execute(
+            """SELECT action, timestamp, note FROM gatekeeper_review_events
+               WHERE review_id = ? ORDER BY id""",
+            (review_id,),
+        )]
+
     def review_history(self, review_id):
         with closing(sqlite3.connect(self.database_path)) as connection:
             connection.row_factory = sqlite3.Row
-            return [dict(row) for row in connection.execute(
-                """SELECT action, timestamp, note FROM gatekeeper_review_events
-                   WHERE review_id = ? ORDER BY id""",
-                (review_id,),
-            )]
+            return self._review_events(connection, review_id)
+
+    def message_review_history(self, message_id):
+        with closing(sqlite3.connect(self.database_path)) as connection:
+            connection.row_factory = sqlite3.Row
+            connection.execute("BEGIN")
+            row = connection.execute(
+                "SELECT filename, assessment FROM gatekeeper_review_snapshots WHERE message_id = ?",
+                (message_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            findings = []
+            for finding in json.loads(row["assessment"])["findings"]:
+                review_id = finding["review_id"]
+                findings.append({
+                    "review_id": review_id,
+                    "category": finding["category"],
+                    "evidence": finding["evidence"],
+                    "events": self._review_events(connection, review_id),
+                })
+            return {"message_id": message_id, "file": row["filename"], "findings": findings}
 
     def save_review_snapshot(self, message_digest, filename, record):
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
