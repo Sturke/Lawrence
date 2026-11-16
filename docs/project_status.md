@@ -357,4 +357,12 @@
   `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
 - Manual verification in Warp: message history returned both TreasuryDirect
   link findings with their own evidence and review timestamps.
-- Next: review and commit the store, importer, test, and documentation changes.
+- Message history was pushed as `1919016`.
+- Follow-up from clean `main` at `1919016`: add `--compact` to the saved
+  review queue. The extended regression failed before implementation and
+  passed afterward. All 106 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: the compact saved queue displayed the
+  MissionSquare message ID, filename, and one pending finding on one line,
+  followed by the one-message queue total.
+- Next: review and commit the compact queue changes.

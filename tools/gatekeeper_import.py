@@ -219,7 +219,10 @@ def main(argv=None):
         help="Show only review findings and import errors in folder text reports",
     )
     parser.add_argument("--review-note", help="Local note to save when marking findings reviewed")
+    parser.add_argument("--compact", action="store_true", help="Show one line per pending message")
     args = parser.parse_args(argv)
+    if args.compact and (not args.review_queue or args.format == "json"):
+        parser.error("--compact requires --review-queue and uses text output")
     if args.review_note is not None and args.mark_reviewed is None and args.mark_message_reviewed is None:
         parser.error("--review-note requires --mark-reviewed or --mark-message-reviewed")
     if args.review_only and (args.folder is None or args.format != "text"):
@@ -266,12 +269,19 @@ def main(argv=None):
             )
         except (OSError, ValueError, sqlite3.Error) as error:
             parser.exit(1, f"Review queue failed: {error}\n")
-        if args.format == "text":
+        if args.compact or args.format == "text":
             for result in results:
-                print(f'=== {json.dumps(result["file"])} ===')
-                print(f'Message ID: {result["assessment"]["message_id"]}')
-                print(format_email_report(result["assessment"]))
-                print()
+                record = result["assessment"]
+                filename = json.dumps(result["file"])
+                if args.compact:
+                    count = len(record["findings"])
+                    noun = "finding" if count == 1 else "findings"
+                    print(f'Message ID: {record["message_id"]} | {filename} | {count} pending {noun}')
+                else:
+                    print(f"=== {filename} ===")
+                    print(f'Message ID: {record["message_id"]}')
+                    print(format_email_report(record))
+                    print()
             noun = "message" if len(results) == 1 else "messages"
             if args.reviewed:
                 print(f"Reviewed view: {len(results)} {noun} with reviewed findings.")

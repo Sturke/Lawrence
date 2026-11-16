@@ -270,3 +270,7 @@ Use `--message-history MESSAGE_ID --database "$queue_db"` to see every
 finding on a current saved assessment, with its evidence and review events
 grouped by finding. Use the numeric ID shown in the saved queue or reviewed
 view. Findings with no review actions have an empty events list.
+
+Add `--compact` to `--review-queue` for one line per pending message with
+its message ID, filename, and pending finding count. The queue summary
+still shows the number of messages with pending findings.

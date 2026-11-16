@@ -624,6 +624,12 @@ def test_saved_review_queue_works_after_original_is_removed(tmp_path, capsys):
     assert "Message ID: 2" in output
     assert "Review queue: 1 message with pending findings." in output
 
+    main(["--review-queue", "--compact", *database])
+    assert capsys.readouterr().out.splitlines() == [
+        'Message ID: 2 | "notice.eml" | 1 pending finding',
+        "Review queue: 1 message with pending findings.",
+    ]
+
 
 def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
     database = ["--database", str(tmp_path / "review.db")]
