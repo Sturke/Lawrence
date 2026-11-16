@@ -62,6 +62,52 @@ class MessageStore:
                     )
                 """)
 
+                connection.execute("""
+                    CREATE TABLE IF NOT EXISTS gatekeeper_review_events (
+                        id INTEGER PRIMARY KEY,
+                        review_id TEXT NOT NULL,
+                        action TEXT NOT NULL,
+                        timestamp TEXT NOT NULL,
+                        note TEXT
+                    )
+                """)
+                connection.execute("""
+                    CREATE INDEX IF NOT EXISTS gatekeeper_review_events_by_finding
+                    ON gatekeeper_review_events (review_id, id)
+                """)
+                connection.execute("""
+                    INSERT INTO gatekeeper_review_events (review_id, action, timestamp, note)
+                    SELECT review_id, 'reviewed', reviewed_at, review_note
+                    FROM gatekeeper_finding_reviews AS current
+                    WHERE reviewed_at IS NOT NULL AND NOT EXISTS (
+                        SELECT 1 FROM gatekeeper_review_events AS event
+                        WHERE event.review_id = current.review_id
+                    )
+                """)
+                connection.execute("""
+                    CREATE TRIGGER IF NOT EXISTS gatekeeper_log_review_state
+                    AFTER UPDATE OF reviewed_at ON gatekeeper_finding_reviews
+                    WHEN (OLD.reviewed_at IS NULL) <> (NEW.reviewed_at IS NULL)
+                    BEGIN
+                        INSERT INTO gatekeeper_review_events (review_id, action, timestamp, note)
+                        VALUES (
+                            NEW.review_id,
+                            CASE WHEN NEW.reviewed_at IS NULL THEN 'reopened' ELSE 'reviewed' END,
+                            COALESCE(NEW.reviewed_at, strftime('%Y-%m-%dT%H:%M:%f+00:00', 'now')),
+                            NEW.review_note
+                        );
+                    END
+                """)
+
+    def review_history(self, review_id):
+        with closing(sqlite3.connect(self.database_path)) as connection:
+            connection.row_factory = sqlite3.Row
+            return [dict(row) for row in connection.execute(
+                """SELECT action, timestamp, note FROM gatekeeper_review_events
+                   WHERE review_id = ? ORDER BY id""",
+                (review_id,),
+            )]
+
     def save_review_snapshot(self, message_digest, filename, record):
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
             connection.execute(

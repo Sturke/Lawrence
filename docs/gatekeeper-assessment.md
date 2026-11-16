@@ -258,3 +258,10 @@ Add `--review-note "your reason"` when marking a finding or a whole message
 reviewed. Whole-message review saves the note on each newly reviewed finding.
 The reviewed view shows the note. Repeating a mark preserves the existing
 note, and reopening clears it along with the current review timestamp.
+
+Use `--review-history REVIEW_ID --database "$queue_db"` to see a finding's
+review and reopen events in order as JSON. Earlier review notes and UTC
+timestamps remain in the history when a finding is reopened. On first use
+with an older database, existing reviewed findings are added with their
+saved dates and notes. Earlier actions no longer present in that database
+cannot be recovered.

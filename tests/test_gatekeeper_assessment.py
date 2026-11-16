@@ -673,3 +673,26 @@ def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
     first, second = json.loads(capsys.readouterr().out)["results"]
     assert [f["review_id"] for f in first["assessment"]["findings"]] == [review_id]
     assert second["file"] == "second.eml"
+
+
+def test_review_history_preserves_notes_across_reopen(tmp_path, capsys):
+    source = tmp_path / "notice.eml"
+    source.write_text(
+        "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+        "Subject: Notice\n\nVerify your password."
+    )
+    database = ["--database", str(tmp_path / "review.db")]
+    main([str(source), "--assess", *database])
+    (finding,) = json.loads(capsys.readouterr().out)["findings"]
+    review_id = finding["review_id"]
+    main(["--mark-reviewed", review_id, "--review-note", "First review", *database])
+    main(["--mark-reviewed", review_id, "--review-note", "Duplicate", *database])
+    main(["--reopen-review", review_id, *database])
+    main(["--mark-message-reviewed", "1", "--review-note", "Second review", *database])
+    capsys.readouterr()
+    main(["--review-history", review_id, *database])
+    history = json.loads(capsys.readouterr().out)["events"]
+    assert [(event["action"], event["note"]) for event in history] == [
+        ("reviewed", "First review"), ("reopened", None), ("reviewed", "Second review"),
+    ]
+    assert all(event["timestamp"].endswith("+00:00") for event in history)

@@ -187,6 +187,7 @@ def main(argv=None):
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
     inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
+    inputs.add_argument("--review-history", metavar="ID", help="Show a finding's review history as JSON")
     inputs.add_argument("--reviewed", action="store_true", help="Show saved reviewed findings")
     inputs.add_argument("--review-queue", action="store_true", help="Show saved pending findings")
     inputs.add_argument(
@@ -225,6 +226,16 @@ def main(argv=None):
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.review_history is not None:
+        if args.assess:
+            parser.error("--review-history cannot be combined with --assess")
+        database = args.database.expanduser()
+        try:
+            events = MessageStore(database).review_history(args.review_history) if database.is_file() else []
+        except (OSError, ValueError, sqlite3.Error) as error:
+            parser.exit(1, f"Review history failed: {error}\n")
+        print(json.dumps({"review_id": args.review_history, "events": events}, indent=2))
+        return
     if args.review_queue or args.reviewed:
         if args.assess:
             parser.error("Saved review views cannot be combined with --assess")

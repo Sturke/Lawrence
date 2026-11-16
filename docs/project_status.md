@@ -340,4 +340,14 @@
 - Manual verification in Warp: the existing SQLite database retained the
   earlier TreasuryDirect review timestamps. Marking MissionSquare with
   a note displayed that note only on its reviewed finding.
-- Next: review and commit the review-note changes.
+- Review notes were pushed as `0a9d6d8`.
+- Follow-up from clean `main` at `0a9d6d8`: persist review and reopen
+  events and expose them by finding ID. Existing reviewed states are
+  backfilled with available timestamps and notes. The new regression
+  failed before implementation and covers review, repeat, reopen, and
+  whole-message review. All 106 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: reopening the MissionSquare finding on
+  the existing test database preserved its original review event and
+  note, followed by a new UTC reopen event.
+- Next: review and commit the history changes.
