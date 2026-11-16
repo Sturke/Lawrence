@@ -718,3 +718,30 @@ def test_review_history_preserves_notes_across_reopen(tmp_path, capsys):
     assert entry["review_id"] == review_id
     assert entry["category"] == "credential_request"
     assert entry["events"] == history
+
+
+def test_review_session_keeps_database_selected(tmp_path, capsys, monkeypatch):
+    from tools.gatekeeper_review import main as review_session
+
+    source = tmp_path / "notice.eml"
+    source.write_text(
+        "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+        "Subject: Notice\n\nVerify your password."
+    )
+    database = ["--database", str(tmp_path / "review.db")]
+    main([str(source), "--assess", *database])
+    capsys.readouterr()
+    commands = iter([
+        "queue", "show 999", "show 1", 'done 1 "Checked locally"',
+        "history 1", "reviewed", "queue", "quit",
+    ])
+    monkeypatch.setattr("builtins.input", lambda prompt: next(commands))
+    review_session(database)
+
+    output = capsys.readouterr()
+    assert 'Message ID: 1 | "notice.eml" | 1 pending finding' in output.out
+    assert "Message ID not found" in output.err
+    assert "1 finding marked reviewed." in output.out
+    assert '"note": "Checked locally"' in output.out
+    assert "Review note: Checked locally" in output.out
+    assert "Review queue: 0 messages" in output.out

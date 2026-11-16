@@ -280,3 +280,17 @@ open one current saved assessment from its numeric ID. It shows every
 finding with current review marks and notes, including reviewed findings
 that the pending queue leaves out. Omitting the format returns the full
 saved assessment as JSON.
+
+## Interactive review session
+
+Start a session with the same database you used to assess your emails:
+
+```bash
+.venv/bin/python -m tools.gatekeeper_review --database "$queue_db"
+```
+
+At the `gatekeeper>` prompt, enter `queue` to list pending messages.
+Use `show MESSAGE_ID` to inspect one, `done MESSAGE_ID "optional note"`
+to mark its pending findings reviewed, and `history MESSAGE_ID` to see
+its review events. Use `reviewed` for the reviewed view, `help` for
+the command list, or `quit` to return to Warp.

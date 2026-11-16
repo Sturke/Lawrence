@@ -373,4 +373,14 @@
 - Manual verification in Warp: saved assessment lookup by Message ID
   displayed both reviewed TreasuryDirect findings, their UTC review
   timestamps, and their domain evidence.
-- Next: review and commit the saved assessment lookup changes.
+- Saved assessment lookup was pushed as `bd45c6c`.
+- Follow-up from clean `main` at `bd45c6c`: add an interactive review session
+  that keeps one database selected and uses the existing queue, lookup,
+  review, and history commands. The regression failed before the module
+  existed, then all 107 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace checks passed.
+- Manual verification in Warp: the interactive session displayed help, the
+  pending MissionSquare message, and the reviewed TreasuryDirect findings
+  from the same selected database, then exited with `quit`. Inspection,
+  marking, and history commands are covered by the automated session test.
+- Next: review and commit the interactive session changes.
