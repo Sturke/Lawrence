@@ -616,6 +616,13 @@ def test_saved_review_queue_works_after_original_is_removed(tmp_path, capsys):
     main(["--review-queue", *database])
     assert json.loads(capsys.readouterr().out)["results"] == []
 
+    main(["--show-message", "2", *database])
+    saved = json.loads(capsys.readouterr().out)
+    assert saved["file"] == "notice.eml"
+    assert saved["assessment"]["message_id"] == 2
+    (finding,) = saved["assessment"]["findings"]
+    assert finding["review_id"] == review_id and finding["reviewed_at"]
+
     main(["--reopen-review", review_id, *database])
     capsys.readouterr()
     main(["--review-queue", "--format", "text", *database])

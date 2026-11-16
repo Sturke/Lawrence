@@ -274,3 +274,9 @@ view. Findings with no review actions have an empty events list.
 Add `--compact` to `--review-queue` for one line per pending message with
 its message ID, filename, and pending finding count. The queue summary
 still shows the number of messages with pending findings.
+
+Use `--show-message MESSAGE_ID --format text --database "$queue_db"` to
+open one current saved assessment from its numeric ID. It shows every
+finding with current review marks and notes, including reviewed findings
+that the pending queue leaves out. Omitting the format returns the full
+saved assessment as JSON.

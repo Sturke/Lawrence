@@ -146,6 +146,28 @@ class MessageStore:
                 (message_digest, record["message_id"], filename, json.dumps(record)),
             )
 
+    def saved_assessment(self, message_id):
+        """Read one current snapshot with live review marks."""
+        with closing(sqlite3.connect(self.database_path)) as connection:
+            connection.execute("BEGIN")
+            row = connection.execute(
+                "SELECT filename, assessment FROM gatekeeper_review_snapshots WHERE message_id = ?",
+                (message_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            filename, assessment = row
+            record = json.loads(assessment)
+            for finding in record["findings"]:
+                state = connection.execute(
+                    """SELECT reviewed_at, review_note FROM gatekeeper_finding_reviews
+                       WHERE review_id = ?""",
+                    (finding["review_id"],),
+                ).fetchone()
+                timestamp, note = state if state is not None else (None, None)
+                finding.update(reviewed_at=timestamp, review_note=note)
+            return {"file": filename, "assessment": record}
+
     def review_snapshots(self, *, show_reviewed=False):
         with closing(sqlite3.connect(self.database_path)) as connection:
             connection.execute("BEGIN")

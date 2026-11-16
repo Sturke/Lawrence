@@ -365,4 +365,12 @@
 - Manual verification in Warp: the compact saved queue displayed the
   MissionSquare message ID, filename, and one pending finding on one line,
   followed by the one-message queue total.
-- Next: review and commit the compact queue changes.
+- The compact queue was pushed as `97f375e`.
+- Follow-up from clean `main` at `97f375e`: open a saved assessment by
+  Message ID with current review state. The extended regression failed
+  before the option was added and passed afterward. All 106 tests passed
+  with `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: saved assessment lookup by Message ID
+  displayed both reviewed TreasuryDirect findings, their UTC review
+  timestamps, and their domain evidence.
+- Next: review and commit the saved assessment lookup changes.

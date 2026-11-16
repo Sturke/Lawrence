@@ -191,6 +191,9 @@ def main(argv=None):
         "--message-history", type=int, metavar="MESSAGE_ID",
         help="Show review history for all findings on a saved assessment as JSON",
     )
+    inputs.add_argument(
+        "--show-message", type=int, metavar="MESSAGE_ID", help="Open a saved assessment",
+    )
     inputs.add_argument("--review-history", metavar="ID", help="Show a finding's review history as JSON")
     inputs.add_argument("--reviewed", action="store_true", help="Show saved reviewed findings")
     inputs.add_argument("--review-queue", action="store_true", help="Show saved pending findings")
@@ -227,12 +230,29 @@ def main(argv=None):
         parser.error("--review-note requires --mark-reviewed or --mark-message-reviewed")
     if args.review_only and (args.folder is None or args.format != "text"):
         parser.error("--review-only requires --folder and --format text")
-    if args.format is not None and not (args.assess or args.review_queue or args.reviewed):
-        parser.error("--format requires --assess, --review-queue, or --reviewed")
+    if args.format is not None and not (args.assess or args.review_queue or args.reviewed or args.show_message is not None):
+        parser.error("--format requires --assess, --review-queue, --reviewed, or --show-message")
     if args.verify_dkim and not args.assess:
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.show_message is not None:
+        if args.assess:
+            parser.error("--show-message cannot be combined with --assess")
+        database = args.database.expanduser()
+        try:
+            result = MessageStore(database).saved_assessment(args.show_message) if database.is_file() else None
+        except (OSError, ValueError, OverflowError, sqlite3.Error) as error:
+            parser.exit(1, f"Saved assessment lookup failed: {error}\n")
+        if result is None:
+            parser.exit(1, "Message ID not found among current saved assessments.\n")
+        if args.format == "text":
+            print(f'=== {json.dumps(result["file"])} ===')
+            print(f"Message ID: {args.show_message}")
+            print(format_email_report(result["assessment"]))
+        else:
+            print(json.dumps(result, indent=2))
+        return
     if args.message_history is not None:
         if args.assess:
             parser.error("--message-history cannot be combined with --assess")
