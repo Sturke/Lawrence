@@ -381,6 +381,7 @@
   `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace checks passed.
 - Manual verification in Warp: the interactive session displayed help, the
   pending MissionSquare message, and the reviewed TreasuryDirect findings
-  from the same selected database, then exited with `quit`. Inspection,
-  marking, and history commands are covered by the automated session test.
+  from the same selected database. A second session opened the MissionSquare
+  assessment and showed its review note and reopen event. Both exited with
+  `quit`. Marking reviewed is covered by the automated session test.
 - Next: review and commit the interactive session changes.
