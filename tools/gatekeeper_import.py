@@ -187,6 +187,10 @@ def main(argv=None):
     inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
     inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
     inputs.add_argument("--review-queue", action="store_true", help="Show saved pending findings")
+    inputs.add_argument(
+        "--mark-message-reviewed", type=int, metavar="MESSAGE_ID",
+        help="Mark all pending findings on one saved message reviewed",
+    )
     inputs.add_argument("--mark-reviewed", metavar="ID", help="Mark one known finding reviewed")
     inputs.add_argument("--reopen-review", metavar="ID", help="Reopen one known finding")
     parser.add_argument(
@@ -227,12 +231,29 @@ def main(argv=None):
         if args.format == "text":
             for result in results:
                 print(f'=== {json.dumps(result["file"])} ===')
+                print(f'Message ID: {result["assessment"]["message_id"]}')
                 print(format_email_report(result["assessment"]))
                 print()
             noun = "message" if len(results) == 1 else "messages"
             print(f"Review queue: {len(results)} {noun} with pending findings.")
         else:
             print(json.dumps({"results": results, "pending_messages": len(results)}))
+        return
+    if args.mark_message_reviewed is not None:
+        if args.assess:
+            parser.error("--mark-message-reviewed cannot be combined with --assess")
+        database = args.database.expanduser()
+        try:
+            count = (
+                MessageStore(database).mark_message_reviewed(args.mark_message_reviewed)
+                if database.is_file() else None
+            )
+        except (OSError, ValueError, OverflowError, sqlite3.Error) as error:
+            parser.exit(1, f"Review update failed: {error}\n")
+        if count is None:
+            parser.exit(1, "Message ID not found among current saved assessments. Open the queue for current IDs.\n")
+        noun = "finding" if count == 1 else "findings"
+        print(f"{count} {noun} marked reviewed.")
         return
     if args.mark_reviewed is not None or args.reopen_review is not None:
         if args.assess:

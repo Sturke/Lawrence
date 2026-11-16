@@ -621,4 +621,30 @@ def test_saved_review_queue_works_after_original_is_removed(tmp_path, capsys):
     main(["--review-queue", "--format", "text", *database])
     output = capsys.readouterr().out
     assert "notice.eml" in output and review_id in output
+    assert "Message ID: 2" in output
     assert "Review queue: 1 message with pending findings." in output
+
+
+def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
+    database = ["--database", str(tmp_path / "review.db")]
+    for name in ("first", "second"):
+        source = tmp_path / f"{name}.eml"
+        source.write_text(
+            "From: test@example.com\nDate: Sun, 15 Nov 2026 10:00:00 +0000\n"
+            f"Subject: {name}\n\nVerify your password. Buy gift cards."
+        )
+        main([str(source), "--assess", *database])
+        if name == "first":
+            first = json.loads(capsys.readouterr().out)
+        else:
+            capsys.readouterr()
+
+    message_id = str(first["message_id"])
+    main(["--mark-message-reviewed", message_id, *database])
+    assert "2 findings marked reviewed." in capsys.readouterr().out
+    main(["--mark-message-reviewed", message_id, *database])
+    assert "0 findings marked reviewed." in capsys.readouterr().out
+    main(["--review-queue", *database])
+    (entry,) = json.loads(capsys.readouterr().out)["results"]
+    assert entry["file"] == "second.eml"
+    assert len(entry["assessment"]["findings"]) == 2

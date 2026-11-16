@@ -235,3 +235,15 @@ email, including messages assessed individually. Opening it does not reread
 the emails, import new rows, or rerun DKIM. An older database needs one
 assessment run to populate the saved queue. The queue reflects the evidence
 and settings from the last assessment, with current review marks applied.
+
+To mark every pending finding on one saved message, copy its current numeric
+Message ID from the queue and run:
+
+```bash
+.venv/bin/python -m tools.gatekeeper_import \
+  --database "$queue_db" --mark-message-reviewed MESSAGE_ID
+```
+
+The command reports how many findings it marked. Reimporting can replace the
+current message ID, so use the ID from the latest queue display. Individual
+findings can still be reopened using their Review IDs.

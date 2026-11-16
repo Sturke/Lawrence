@@ -88,6 +88,24 @@ class MessageStore:
                     results.append({"file": filename, "assessment": dict(record, findings=pending)})
             return results
 
+    def mark_message_reviewed(self, message_id):
+        """Mark pending findings on the selected current snapshot."""
+        with closing(sqlite3.connect(self.database_path)) as connection, connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT assessment FROM gatekeeper_review_snapshots WHERE message_id = ?",
+                (message_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            timestamp = datetime.now(UTC).isoformat()
+            cursor = connection.executemany(
+                """UPDATE gatekeeper_finding_reviews SET reviewed_at = ?
+                   WHERE review_id = ? AND reviewed_at IS NULL""",
+                ((timestamp, item["review_id"]) for item in json.loads(row[0])["findings"]),
+            )
+            return cursor.rowcount
+
     def finding_review_states(self, review_ids):
         with closing(sqlite3.connect(self.database_path)) as connection, connection:
             connection.executemany(

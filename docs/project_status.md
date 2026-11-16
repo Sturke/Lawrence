@@ -312,4 +312,14 @@
 - Manual verification in Warp: after assessing the 12-email folder, the
   saved queue opened with only its database path and showed the MissionSquare
   and TreasuryDirect reports, two messages with pending findings.
-- Next: review and commit the saved queue changes.
+- The saved queue was pushed as `8769ebb`.
+- Follow-up from clean `main` at `8769ebb`: the saved queue shows message IDs
+  and `--mark-message-reviewed` marks pending findings for one current
+  snapshot. The new regression failed before implementation and now covers
+  marking two findings, repeating the command, and preserving another
+  message's findings. All 105 tests passed with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: marking TreasuryDirect's message ID reviewed
+  cleared both of its pending findings in one command. MissionSquare
+  remained in the saved queue after its earlier finding was reopened.
+- Next: review and commit the message-level review changes.
