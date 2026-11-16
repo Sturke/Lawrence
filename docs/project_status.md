@@ -322,4 +322,13 @@
 - Manual verification in Warp: marking TreasuryDirect's message ID reviewed
   cleared both of its pending findings in one command. MissionSquare
   remained in the saved queue after its earlier finding was reopened.
-- Next: review and commit the message-level review changes.
+- Message-level review was pushed as `7d1a3ea`.
+- Follow-up from clean `main` at `7d1a3ea`: the saved reviewed view shows
+  reviewed findings, IDs, and timestamps. The extended regression failed
+  before the option existed and now verifies that reopening moves only the
+  selected finding back to pending. The full suite passed all 105 tests with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`. Whitespace check passed.
+- Manual verification in Warp: the reviewed view showed both TreasuryDirect
+  findings with their UTC review timestamps. MissionSquare was absent because
+  its finding was still pending.
+- Next: review and commit the saved reviewed view.

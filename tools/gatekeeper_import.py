@@ -186,6 +186,7 @@ def main(argv=None):
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("email", nargs="?", type=Path, help="Path to a saved .eml file")
     inputs.add_argument("--folder", type=Path, help="Assess .eml files in this folder")
+    inputs.add_argument("--reviewed", action="store_true", help="Show saved reviewed findings")
     inputs.add_argument("--review-queue", action="store_true", help="Show saved pending findings")
     inputs.add_argument(
         "--mark-message-reviewed", type=int, metavar="MESSAGE_ID",
@@ -214,18 +215,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.review_only and (args.folder is None or args.format != "text"):
         parser.error("--review-only requires --folder and --format text")
-    if args.format is not None and not (args.assess or args.review_queue):
-        parser.error("--format requires --assess or --review-queue")
+    if args.format is not None and not (args.assess or args.review_queue or args.reviewed):
+        parser.error("--format requires --assess, --review-queue, or --reviewed")
     if args.verify_dkim and not args.assess:
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
-    if args.review_queue:
+    if args.review_queue or args.reviewed:
         if args.assess:
-            parser.error("--review-queue cannot be combined with --assess")
+            parser.error("Saved review views cannot be combined with --assess")
         database = args.database.expanduser()
         try:
-            results = MessageStore(database).pending_review_snapshots() if database.exists() else []
+            results = (
+                MessageStore(database).review_snapshots(show_reviewed=args.reviewed)
+                if database.exists() else []
+            )
         except (OSError, ValueError, sqlite3.Error) as error:
             parser.exit(1, f"Review queue failed: {error}\n")
         if args.format == "text":
@@ -235,9 +239,13 @@ def main(argv=None):
                 print(format_email_report(result["assessment"]))
                 print()
             noun = "message" if len(results) == 1 else "messages"
-            print(f"Review queue: {len(results)} {noun} with pending findings.")
+            if args.reviewed:
+                print(f"Reviewed view: {len(results)} {noun} with reviewed findings.")
+            else:
+                print(f"Review queue: {len(results)} {noun} with pending findings.")
         else:
-            print(json.dumps({"results": results, "pending_messages": len(results)}))
+            count_key = "reviewed_messages" if args.reviewed else "pending_messages"
+            print(json.dumps({"results": results, count_key: len(results)}))
         return
     if args.mark_message_reviewed is not None:
         if args.assess:

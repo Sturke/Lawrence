@@ -69,23 +69,24 @@ class MessageStore:
                 (message_digest, record["message_id"], filename, json.dumps(record)),
             )
 
-    def pending_review_snapshots(self):
+    def review_snapshots(self, *, show_reviewed=False):
         with closing(sqlite3.connect(self.database_path)) as connection:
             connection.execute("BEGIN")
-            reviewed = {row[0] for row in connection.execute(
-                "SELECT review_id FROM gatekeeper_finding_reviews WHERE reviewed_at IS NOT NULL"
-            )}
+            reviewed = dict(connection.execute(
+                "SELECT review_id, reviewed_at FROM gatekeeper_finding_reviews WHERE reviewed_at IS NOT NULL"
+            ))
             results = []
             for filename, assessment in connection.execute(
                 "SELECT filename, assessment FROM gatekeeper_review_snapshots ORDER BY message_id"
             ):
                 record = json.loads(assessment)
-                pending = [
-                    dict(finding, reviewed_at=None)
-                    for finding in record["findings"] if finding["review_id"] not in reviewed
+                findings = [
+                    dict(finding, reviewed_at=reviewed.get(finding["review_id"]))
+                    for finding in record["findings"]
+                    if (finding["review_id"] in reviewed) == show_reviewed
                 ]
-                if pending:
-                    results.append({"file": filename, "assessment": dict(record, findings=pending)})
+                if findings:
+                    results.append({"file": filename, "assessment": dict(record, findings=findings)})
             return results
 
     def mark_message_reviewed(self, message_id):

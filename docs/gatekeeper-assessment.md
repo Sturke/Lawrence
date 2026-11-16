@@ -247,3 +247,9 @@ Message ID from the queue and run:
 The command reports how many findings it marked. Reimporting can replace the
 current message ID, so use the ID from the latest queue display. Individual
 findings can still be reopened using their Review IDs.
+
+Use `--reviewed --format text` to see reviewed findings from each current
+saved assessment. The report includes each finding's Review ID and UTC
+review timestamp. Reopening an individual finding moves it back to the
+pending queue. A message can appear in both views if it has both kinds
+of findings.

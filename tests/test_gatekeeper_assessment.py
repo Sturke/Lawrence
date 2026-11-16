@@ -648,3 +648,26 @@ def test_mark_message_reviewed_only_updates_selected_snapshot(tmp_path, capsys):
     (entry,) = json.loads(capsys.readouterr().out)["results"]
     assert entry["file"] == "second.eml"
     assert len(entry["assessment"]["findings"]) == 2
+
+    main(["--reviewed", *database])
+    (entry,) = json.loads(capsys.readouterr().out)["results"]
+    assert entry["file"] == "first.eml"
+    reviewed = entry["assessment"]["findings"]
+    assert len(reviewed) == 2 and all(f["reviewed_at"] for f in reviewed)
+    review_id = reviewed[0]["review_id"]
+
+    main(["--reviewed", "--format", "text", *database])
+    output = capsys.readouterr().out
+    assert review_id in output and reviewed[0]["reviewed_at"] in output
+    assert "second.eml" not in output
+
+    main(["--reopen-review", review_id, *database])
+    capsys.readouterr()
+    main(["--reviewed", *database])
+    (entry,) = json.loads(capsys.readouterr().out)["results"]
+    assert len(entry["assessment"]["findings"]) == 1
+    assert entry["assessment"]["findings"][0]["review_id"] != review_id
+    main(["--review-queue", *database])
+    first, second = json.loads(capsys.readouterr().out)["results"]
+    assert [f["review_id"] for f in first["assessment"]["findings"]] == [review_id]
+    assert second["file"] == "second.eml"
