@@ -131,6 +131,29 @@ The `checks` object describes which domain comparisons ran for this message.
 Use `findings` for signals that triggered review.
 
 
+## Urgent update and renewal links
+
+An urgent update or renewal subject can trigger a low-confidence
+`urgent_action_external_link` finding when an HTML link labeled “Update now”,
+“Update payment”, or “Renew now” points outside the claimed From domain and
+its subdomains. The check requires one usable From address. The report includes
+the subject, link label, and both domains as unverified evidence. Gatekeeper
+reads link destinations locally without opening them.
+
+## Cloud-hosted action pages
+
+Gatekeeper can flag links to HTML pages hosted at `storage.googleapis.com`
+when either of these combinations is present:
+
+- An urgent update or renewal subject, an “Update Payment” link, and an
+  unusable From address.
+- A home warranty subject, a “Get my free quote” or similar link, and a
+  usable From domain different from the link host.
+
+Both findings are low confidence and include the subject, link label,
+destination host, and available From domain. Gatekeeper reads the URL from
+the saved message without visiting it.
+
 ## Sender trust
 
 Use the repeatable `--approved-sender ADDRESS` option with `--assess` to
@@ -157,6 +180,20 @@ importer's default SQLite database. For an isolated test, pass the same
 Approvals store the exact address and its UTC approval time. Assessments
 consult saved approvals along with any addresses supplied for that command.
 
+
+## Expected sender domains for a brand
+
+With `--assess`, pass `--brand-sender-domain "Example Bank" example.com`
+to check that a sensitive subject naming the brand comes from an expected
+From domain. Repeat the option for each independently verified domain,
+including any legitimate mail provider domains and subdomains you expect.
+Gatekeeper compares exact domain names, ignoring case and a final DNS dot.
+
+The check looks for supported sign-in, account verification, password reset,
+or payment wording in the subject. An unexpected usable From domain adds a
+low-confidence Review finding with the subject and expected domains.
+This check runs only for brands supplied on that command. Domain membership
+and DKIM authentication are separate checks.
 
 ## Optional DKIM verification
 

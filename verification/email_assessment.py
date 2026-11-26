@@ -46,18 +46,39 @@ NOTICE_SUBJECTS = (
 )
 
 
-class LinkDomainParser(HTMLParser):
-    domain_pattern = re.compile(
-        r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}",
-        re.IGNORECASE | re.ASCII,
-    )
+URGENT_SUBJECT = re.compile(r"\burgent\b", re.IGNORECASE)
+UPDATE_OR_RENEWAL_SUBJECT = re.compile(r"\b(?:update|renew|renewal)\b", re.IGNORECASE)
+ACTION_LINK_LABEL = re.compile(
+    r"(?:update (?:now|payment)|renew now)", re.IGNORECASE
+)
 
+
+HOME_WARRANTY_SUBJECT = re.compile(r"\bhome warranty\b", re.IGNORECASE)
+QUOTE_LINK_LABEL = re.compile(r"get (?:a|my|your) free quote(?:\s*→)?", re.IGNORECASE)
+
+
+SENSITIVE_SUBJECT = re.compile(
+    r"\b(?:sign[ -]in|log[ -]in|verify (?:your )?(?:account|password)"
+    r"|reset (?:your )?password|(?:update|confirm|make) (?:your )?(?:a )?payment)\b",
+    re.IGNORECASE,
+)
+
+
+DOMAIN_PATTERN = re.compile(
+    r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}",
+    re.IGNORECASE | re.ASCII,
+)
+
+
+class LinkDomainParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.href = None
         self.label_parts = []
         self.links_compared = 0
         self.mismatches = []
+        self.action_links = []
+        self.cloud_page_links = []
 
     def handle_starttag(self, tag, attrs):
         if tag == "a":
@@ -74,9 +95,7 @@ class LinkDomainParser(HTMLParser):
 
         href = self.href
         self.href = None
-        displayed_domain = "".join(self.label_parts).strip().lower()
-        if not self.domain_pattern.fullmatch(displayed_domain):
-            return
+        label = " ".join("".join(self.label_parts).split())
 
         try:
             destination = urlsplit(href)
@@ -87,9 +106,18 @@ class LinkDomainParser(HTMLParser):
         if destination.scheme not in {"http", "https"} or not destination_domain:
             return
 
-        self.links_compared += 1
-        if destination_domain.lower() != displayed_domain:
-            self.mismatches.append((displayed_domain, destination_domain.lower()))
+        if ACTION_LINK_LABEL.fullmatch(label):
+            self.action_links.append((label, destination_domain.rstrip(".")))
+        if (
+            destination_domain.rstrip(".") == "storage.googleapis.com"
+            and destination.path.lower().endswith((".htm", ".html"))
+        ):
+            self.cloud_page_links.append(label)
+        displayed_domain = label.lower()
+        if DOMAIN_PATTERN.fullmatch(displayed_domain):
+            self.links_compared += 1
+            if destination_domain != displayed_domain:
+                self.mismatches.append((displayed_domain, destination_domain))
 
 
 class HTMLBodyTextParser(HTMLParser):
@@ -121,10 +149,35 @@ class HTMLBodyTextParser(HTMLParser):
             self.parts.append(data)
 
 
+def brand_sender_findings(subject, from_domain, brand_sender_domains):
+    if not from_domain or not SENSITIVE_SUBJECT.search(subject):
+        return
+
+    sender_domain = from_domain.lower().rstrip(".")
+    for brand, expected_domains in brand_sender_domains.items():
+        if not re.search(rf"(?<!\w){re.escape(brand)}(?!\w)", subject, re.IGNORECASE):
+            continue
+        if sender_domain in expected_domains:
+            continue
+        yield {
+            "category": "brand_sender_domain_mismatch",
+            "confidence": "low",
+            "reason": "The subject names a configured brand and requests a sensitive action from an unexpected sender domain.",
+            "evidence": {
+                "brand": brand,
+                "subject": subject,
+                "from_domain": from_domain,
+                "expected_domains": sorted(expected_domains),
+                "source_type": "local_email",
+                "verification_status": "unverified",
+            },
+        }
+
+
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
     claimed_address=None, approved_senders=(), sender_domain_authentication=None,
-    plain_text_available=True,
+    plain_text_available=True, brand_sender_domains=None,
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
@@ -205,6 +258,60 @@ def assess_email(
                     "verification_status": "unverified",
                 },
             })
+
+        subject = message["subject"]
+        urgent_update = URGENT_SUBJECT.search(subject) and UPDATE_OR_RENEWAL_SUBJECT.search(subject)
+        if from_domain and urgent_update:
+            sender_domain = from_domain.lower().rstrip(".")
+            for label, destination in parser.action_links:
+                if destination == sender_domain or destination.endswith("." + sender_domain):
+                    continue
+                findings.append({
+                    "category": "urgent_action_external_link",
+                    "confidence": "low",
+                    "reason": "An urgent update or renewal directs action outside the claimed sender domain.",
+                    "evidence": {
+                        "subject": subject,
+                        "link_label": label,
+                        "from_domain": from_domain,
+                        "destination_domain": destination,
+                        "source_type": "local_email",
+                        "verification_status": "unverified",
+                    },
+                })
+                break
+
+        for label in parser.cloud_page_links:
+            if urgent_update and not from_domain and label.casefold() == "update payment":
+                category = "urgent_payment_cloud_page"
+                reason = "An urgent payment update links to a cloud-hosted HTML page and the From address is unusable."
+            elif (
+                HOME_WARRANTY_SUBJECT.search(subject)
+                and QUOTE_LINK_LABEL.fullmatch(label)
+                and from_domain
+                and from_domain.lower().rstrip(".") != "storage.googleapis.com"
+            ):
+                category = "home_warranty_quote_cloud_page"
+                reason = "A home warranty quote links to a cloud-hosted HTML page outside the claimed sender domain."
+            else:
+                continue
+            findings.append({
+                "category": category,
+                "confidence": "low",
+                "reason": reason,
+                "evidence": {
+                    "subject": subject,
+                    "link_label": label,
+                    "from_domain": from_domain,
+                    "destination_domain": "storage.googleapis.com",
+                    "source_type": "local_email",
+                    "verification_status": "unverified",
+                },
+            })
+            break
+
+    if brand_sender_domains:
+        findings.extend(brand_sender_findings(message["subject"], from_domain, brand_sender_domains))
 
     recognized = []
     for category, pattern in NOTICE_SUBJECTS:

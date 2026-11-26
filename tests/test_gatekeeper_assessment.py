@@ -782,3 +782,88 @@ def test_review_session_keeps_database_selected(tmp_path, capsys, monkeypatch):
     assert '"note": "Checked locally"' in output.out
     assert "Review note: Checked locally" in output.out
     assert "Review queue: 0 messages" in output.out
+
+
+def test_urgent_update_with_external_link_requires_review():
+    from verification.email_assessment import assess_email
+
+    message = {"subject": "Your device needs an urgent update", "body": ""}
+    for host, subject, expected in [
+        ("downloads.example.net", message["subject"], ["urgent_action_external_link"]),
+        ("downloads.example.com", message["subject"], []),
+        ("downloads.example.net", "Update available", []),
+    ]:
+        record = assess_email(
+            1, dict(message, subject=subject), from_domain="example.com",
+            html_body=f'<a href="https://{host}/">Update now</a>',
+        )
+        assert [finding["category"] for finding in record["findings"]] == expected
+        if expected:
+            assert record["disposition"] == "review_required"
+            assert record["findings"][0]["evidence"]["destination_domain"] == host
+
+
+def test_cloud_hosted_payment_and_quote_pages_require_matching_context():
+    from verification.email_assessment import assess_email
+
+    cases = [
+        ("Urgent: renew today", None, "Update Payment", "payment.html", "urgent_payment_cloud_page"),
+        ("Urgent: renew today", None, "Update Payment", "payment.pdf", None),
+        ("Urgent: renew today", None, "Unsubscribe", "preferences.html", None),
+        ("Renew today", None, "Update Payment", "payment.html", None),
+        ("Free home warranty quote", "example.com", "Get my free quote →", "quote.htm", "home_warranty_quote_cloud_page"),
+        ("Free window quote", "example.com", "Get my free quote →", "quote.htm", None),
+    ]
+    for subject, sender, label, path, category in cases:
+        record = assess_email(
+            1, {"subject": subject, "body": ""}, from_domain=sender,
+            html_body=f'<a href="https://storage.googleapis.com/example/{path}">{label}</a>',
+        )
+        assert [finding["category"] for finding in record["findings"]] == (
+            [category] if category else []
+        )
+
+
+def test_brand_sender_check_distinguishes_sensitive_requests(tmp_path, capsys):
+    source = tmp_path / "brand-notice.eml"
+    database = tmp_path / "brand-notices.sqlite3"
+    args = [
+        str(source), "--assess", "--database", str(database),
+        "--brand-sender-domain", "Example Bank", "example.com",
+        "--brand-sender-domain", "Example Bank", "mailer.example.net",
+    ]
+    for sender, subject, flagged in [
+        ("elsewhere.example", "Example Bank: Sign in to your account", True),
+        ("example.com.evil.example", "Example Bank: Update payment", True),
+        ("EXAMPLE.COM", "Example Bank: Sign in to your account", False),
+        ("mailer.example.net", "Example Bank: Update payment", False),
+        ("elsewhere.example", "Example Bank: November newsletter", False),
+        ("elsewhere.example", "Example Banking: Update payment", False),
+        ("elsewhere.example", "Example Bank: Update payment", True),
+    ]:
+        source.write_text(
+            f"From: notices@{sender}\n"
+            "Date: Sat, 14 Nov 2026 10:00:00 -0600\n"
+            f"Subject: {subject}\n\nPlease see this notice.\n",
+            encoding="utf-8",
+        )
+        main(args)
+        record = json.loads(capsys.readouterr().out)
+        findings = record["findings"]
+        if flagged:
+            (finding,) = findings
+            assert finding["category"] == "brand_sender_domain_mismatch"
+            assert finding["evidence"]["from_domain"] == sender
+            assert finding["evidence"]["brand"] == "Example Bank"
+            assert record["disposition"] == "review_required"
+        else:
+            assert findings == []
+            assert record["disposition"] == "inconclusive"
+
+    main([*args, "--format", "text"])
+    output = capsys.readouterr().out
+    assert "Brand: Example Bank" in output
+    assert "From: elsewhere.example | Expected: example.com, mailer.example.net" in output
+
+    main(args[:4])
+    assert json.loads(capsys.readouterr().out)["findings"] == []

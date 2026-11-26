@@ -12,7 +12,7 @@ from pathlib import Path
 
 from memory.gatekeeper import DEFAULT_DATABASE, MessageStore
 from verification.dkim_authentication import authenticate_from_domain
-from verification.email_assessment import assess_email
+from verification.email_assessment import DOMAIN_PATTERN, assess_email
 from verification.email_report import format_email_report
 
 
@@ -125,7 +125,8 @@ def import_one(path, args):
     if args.assess:
         message_digest = domains.pop("message_digest")
         record = assess_email(
-            message_id, message, approved_senders=approved_senders, **domains
+            message_id, message, approved_senders=approved_senders,
+            brand_sender_domains=args.brand_sender_domains, **domains
         )
         add_finding_review_states(record, message_digest, store)
         store.save_review_snapshot(message_digest, path.name, record)
@@ -213,6 +214,10 @@ def main(argv=None):
         "--approved-sender", action="append", default=[], metavar="ADDRESS",
         help="Exact approved address for this assessment (repeatable)",
     )
+    parser.add_argument(
+        "--brand-sender-domain", action="append", nargs=2, default=[],
+        metavar=("BRAND", "DOMAIN"), help="Expected exact sender domain for a brand (repeatable)",
+    )
     parser.add_argument("--verify-dkim", action="store_true", help="Verify DKIM using DNS")
     parser.add_argument(
         "--format", choices=("json", "text"), help="Assessment output format (default: json)",
@@ -236,6 +241,17 @@ def main(argv=None):
         parser.error("--verify-dkim requires --assess")
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
+    if args.brand_sender_domain and not args.assess:
+        parser.error("--brand-sender-domain requires --assess")
+    brand_domains = {}
+    for brand, domain in args.brand_sender_domain:
+        brand = brand.strip()
+        domain = domain.strip().lower().removesuffix(".")
+        if not brand or not DOMAIN_PATTERN.fullmatch(domain):
+            parser.error("--brand-sender-domain requires a brand name and a bare DNS domain")
+        _, domains = brand_domains.setdefault(brand.casefold(), (brand, set()))
+        domains.add(domain)
+    args.brand_sender_domains = dict(brand_domains.values())
     if args.show_message is not None:
         if args.assess:
             parser.error("--show-message cannot be combined with --assess")

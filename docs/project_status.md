@@ -1,5 +1,38 @@
 # Current Project Status
 
+## Brand and sender screening — November 26, 2026
+
+- Built on `main` at `6ccf196` with the earlier saved-email rule changes
+  already uncommitted. Added opt-in, exact expected sender domains for
+  named brands and a low-confidence finding for mismatches on supported
+  sensitive subjects.
+- The CLI regression initially failed because the option was unavailable.
+  The final suite passed 111 tests using `python -m pytest -q -p no:cacheprovider`
+  with the original checkout's virtual environment. `git diff --check` passed.
+  Verification used fictional brand and sender data, including a lookalike
+  domain, approved mail provider, and newsletter.
+- Real brand domain lists and independent sample validation are still pending.
+
+## Saved-email validation — November 25, 2026
+
+- Started from clean `main` at `6ccf196`. Offline baseline: 18 saved
+  messages imported, three flagged. The user labeled six samples as scams
+  or phishing, and one of those six triggered review at baseline.
+- Added low-confidence findings for urgent external action links,
+  urgent cloud-hosted payment pages with no usable From address, and
+  cloud-hosted home warranty quote pages outside the claimed From domain.
+- The final offline rerun imported all 18 messages and flagged seven.
+  Five of the six labeled samples triggered review, with the Black Friday
+  promotion still inconclusive. The dispositions for the other 12 stayed
+  the same.
+- The first synthetic regression failed before its rule was added. The final
+  suite passed 110 tests using `python -m pytest -q -p no:cacheprovider` with
+  the original checkout's virtual environment. The batch text report also
+  completed successfully. `git diff --check` passed. Batch runs used
+  temporary databases and opened no links.
+- These samples informed rule design. Use a separate set to measure how
+  the rules generalize.
+
 ## Current checkpoint — November 25, 2026
 
 - Completed the multipart body screening increment in the writable Lawrence

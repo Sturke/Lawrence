@@ -72,6 +72,23 @@ def format_email_report(record):
             if evidence["destination_domain"].endswith("." + evidence["displayed_domain"]):
                 destination += " (subdomain of displayed domain)"
             lines.append(f"    Displayed: {displayed} | Destination: {destination}")
+        elif finding["category"] in {
+            "urgent_action_external_link", "urgent_payment_cloud_page",
+            "home_warranty_quote_cloud_page",
+        }:
+            subject = _terminal_text(evidence["subject"])
+            label = _terminal_text(evidence["link_label"])
+            sender = _terminal_text(evidence["from_domain"] or "Usable address unavailable")
+            destination = _terminal_text(evidence["destination_domain"])
+            lines.append(f"    Subject: {subject} | Link label: {label}")
+            lines.append(f"    From: {sender} | Destination: {destination}")
+        elif finding["category"] == "brand_sender_domain_mismatch":
+            brand = _terminal_text(evidence["brand"])
+            subject = _terminal_text(evidence["subject"])
+            sender = _terminal_text(evidence["from_domain"])
+            expected = ", ".join(map(_terminal_text, evidence["expected_domains"]))
+            lines.append(f"    Brand: {brand} | Subject: {subject}")
+            lines.append(f"    From: {sender} | Expected: {expected}")
         elif finding["category"] == "reply_to_domain_mismatch":
             from_domain = _terminal_text(evidence["from_domain"])
             reply_to_domain = _terminal_text(evidence["reply_to_domain"])
