@@ -483,6 +483,43 @@ def test_html_only_assesses_subject_links_and_body_phrases(tmp_path, capsys):
     assert MessageStore(database).get_message(record["message_id"])["body"] == ""
 
 
+def test_multipart_email_checks_both_body_formats(tmp_path, capsys):
+    from email.message import EmailMessage
+
+    message = EmailMessage()
+    message["From"] = "notices@example.com"
+    message["Date"] = "Sun, 15 Nov 2026 10:00:00 -0600"
+    message["Subject"] = "Account update"
+    message.set_content("Instructions about a wire transfer.")
+    message.add_alternative(
+        "<p>Verify your <strong>password</strong> to start the wire transfer.</p>",
+        subtype="html",
+    )
+    source = tmp_path / "multipart.eml"
+    source.write_bytes(message.as_bytes())
+    database = tmp_path / "messages.sqlite3"
+    args = [str(source), "--assess", "--database", str(database)]
+
+    main(args)
+    record = json.loads(capsys.readouterr().out)
+    assert record["disposition"] == "review_required"
+    assert record["checks"]["plain_text_body"] == {"status": "checked"}
+    assert record["checks"]["html_body_phrases"] == {"status": "checked"}
+    sources = [
+        (finding["category"], finding["evidence"]["field"])
+        for finding in record["findings"]
+    ]
+    assert sources == [
+        ("credential_request", "html_body_text"),
+        ("payment_request", "body"),
+    ]
+
+    main([*args, "--format", "text"])
+    output = capsys.readouterr().out
+    assert "Source: Extracted HTML text | Matched: Verify your password" in output
+    assert "Coverage: Checked plain-text and extracted HTML for phrases." in output
+
+
 def test_recognizes_short_reset_subject(tmp_path, capsys):
     record = assess(tmp_path, capsys, "Reset Password", "See account activity.")
     (notice,) = record["recognized"]

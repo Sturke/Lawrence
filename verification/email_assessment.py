@@ -1,4 +1,4 @@
-"""Deterministic review signals for locally imported plain-text email."""
+"""Deterministic review signals for locally imported email."""
 
 import re
 from html.parser import HTMLParser
@@ -132,15 +132,13 @@ def assess_email(
     if plain_text_available:
         phrase_fields.append(("body", message["body"]))
 
-    html_phrase_check = {"status": "skipped", "reason": "plain_text_body_preferred"}
-    if not plain_text_available:
-        html_phrase_check = {"status": "skipped", "reason": "html_body_unavailable"}
-        if html_body is not None:
-            parser = HTMLBodyTextParser()
-            parser.feed(html_body)
-            parser.close()
-            phrase_fields.append(("html_body_text", "".join(parser.parts)))
-            html_phrase_check = {"status": "checked"}
+    html_phrase_check = {"status": "skipped", "reason": "html_body_unavailable"}
+    if html_body is not None:
+        parser = HTMLBodyTextParser()
+        parser.feed(html_body)
+        parser.close()
+        phrase_fields.append(("html_body_text", "".join(parser.parts)))
+        html_phrase_check = {"status": "checked"}
     for category, pattern, reason in RULES:
         for field, value in phrase_fields:
             match = pattern.search(value)
@@ -265,7 +263,7 @@ def assess_email(
         "limitations": [
             "Phrase matching can miss risks or match benign text.",
             "HTML body phrases use extracted text without evaluating CSS or rendering.",
-            "The assessment checks the subject, plain-text body, when available, and available From and Reply-To domains.",
+            "The assessment checks phrases in the subject and available bodies, and compares available From and Reply-To domains.",
             "The HTML link check compares domain-only labels with HTTP or HTTPS destination hostnames without opening links.",
             "Sender identity and message claims were not verified.",
         ],

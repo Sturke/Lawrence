@@ -98,9 +98,12 @@ def format_email_report(record):
         }[link_check["reason"]]
         link_coverage = f"HTML links skipped ({reason})"
     lines.append(f"Coverage: {reply_coverage}; {link_coverage}.")
-    if record["checks"]["plain_text_body"]["status"] == "skipped":
-        if record["checks"]["html_body_phrases"]["status"] == "checked":
-            lines.append("Coverage: Checked extracted HTML text (no plain-text body).")
-        else:
-            lines.append("Coverage: Body phrase check skipped (no usable body text).")
+    plain_text_checked = checks["plain_text_body"]["status"] == "checked"
+    html_text_checked = checks["html_body_phrases"]["status"] == "checked"
+    if plain_text_checked and html_text_checked:
+        lines.append("Coverage: Checked plain-text and extracted HTML for phrases.")
+    elif html_text_checked:
+        lines.append("Coverage: Checked extracted HTML text (no plain-text body).")
+    elif not plain_text_checked:
+        lines.append("Coverage: Body phrase check skipped (no usable body text).")
     return "\n".join(lines)

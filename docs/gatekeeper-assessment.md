@@ -2,7 +2,7 @@
 
 Run `python3 -m tools.gatekeeper_import saved.eml --assess --database /path/to/gatekeeper.sqlite3`
 to import one local message and emit a JSON review record to stdout. The existing
-import rules apply. Assessment reads the decoded subject and plain-text body when available.
+import rules apply. Assessment reads the decoded subject and available plain-text and HTML bodies.
 The `From` and `Date` headers are self-reported. Attachments are outside
 assessment coverage. When an HTML alternative is available, Gatekeeper compares
 domain names shown as link labels with their HTTP or HTTPS destination hostnames.
@@ -85,7 +85,7 @@ unverified evidence.
 
 Rules match whole phrases case-insensitively with flexible whitespace.
 Each category appears at most once, with the first matching subject excerpt
-or, failing that, the first matching body excerpt. Each finding gives its
+or the first matching plain-text or extracted HTML excerpt, in that order. Each finding gives its
 category, confidence, reason, and separate evidence with field, exact excerpt,
 source type `local_email`, and verification status `unverified`.
 
@@ -184,12 +184,12 @@ want the report to include a live DNS verification result. JSON remains the
 default and includes the full evidence and assessment limitations.
 
 
-For HTML-only mail, Gatekeeper checks the subject, eligible links, and
-extracted HTML text. Text extraction skips head, script, style, and template
+Gatekeeper checks extracted HTML text for phrases in both multipart and
+HTML-only mail. Text extraction skips head, script, style, and template
 content and does not render the email or evaluate CSS visibility. Phrase
 findings from that text use the evidence field `html_body_text`. JSON reports
 plain-text and HTML phrase coverage separately. The stored plain-text body
-is empty.
+is empty for HTML-only mail.
 
 The text coverage line says whether the Reply-To domains matched, differed,
 or could not be compared. It also shows the number of eligible HTML links

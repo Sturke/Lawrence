@@ -1,5 +1,26 @@
 # Current Project Status
 
+## Current checkpoint — November 25, 2026
+
+- Completed the multipart body screening increment in the writable Lawrence
+  checkout. Clean starting point: `main` at `9b6cb80`, which records the
+  interactive review verification previously listed as pending below.
+- Gatekeeper now checks extracted HTML for credential and payment phrases
+  even when plain text is present. It records one finding per category,
+  preferring subject evidence and then plain-text evidence when either matches.
+- Uncommitted changes cover the assessment, terminal report, CLI regression,
+  assessment guide, and this checkpoint. The original checkout at
+  `~/GitHub/Butler` was used as the source for the working copy.
+- On November 25, the original virtual environment's Python ran
+  `-m pytest -q -p no:cacheprovider` in the working copy. The baseline passed
+  107 tests. The new regression first failed because HTML screening was
+  skipped for multipart mail. After implementation, all 108 tests passed.
+  `git diff --check` passed. The new case used a synthetic saved email.
+- Proposed next step: evaluate Gatekeeper findings against an approved set
+  of local saved emails before connecting a live inbox. Live inbox access,
+  permission enforcement for mailbox actions, and autonomous routing remain
+  future work.
+
 ## Verified checkpoint — November 14, 2026
 
 - Completed milestone — Improved Retrieval v1B was committed as `44ec2a1`
