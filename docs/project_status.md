@@ -1,17 +1,21 @@
 # Current Project Status
 
-## Brand and sender screening — November 26, 2026
+## Current checkpoint — November 26, 2026
 
-- Built on `main` at `6ccf196` with the earlier saved-email rule changes
-  already uncommitted. Added opt-in, exact expected sender domains for
-  named brands and a low-confidence finding for mismatches on supported
-  sensitive subjects.
+- Local `main` includes `609b179` (`Add Gatekeeper brand and action-link
+  screening`), one commit ahead of `origin/main` as of November 26.
+  It includes the saved-email rules below and the opt-in brand check for
+  unexpected sender domains on supported sensitive subjects. See the
+  [assessment guide](gatekeeper-assessment.md) for the rules and CLI usage.
 - The CLI regression initially failed because the option was unavailable.
   The final suite passed 111 tests using `python -m pytest -q -p no:cacheprovider`
   with the original checkout's virtual environment. `git diff --check` passed.
   Verification used fictional brand and sender data, including a lookalike
   domain, approved mail provider, and newsletter.
-- Real brand domain lists and independent sample validation are still pending.
+- Next: validate the rules on a fresh, labeled batch of legitimate and
+  suspicious saved emails. Use independently verified sender domains for
+  any real brands included in that check. Live inbox access, permission
+  enforcement for mailbox actions, and autonomous routing remain future work.
 
 ## Saved-email validation — November 25, 2026
 
@@ -33,7 +37,7 @@
 - These samples informed rule design. Use a separate set to measure how
   the rules generalize.
 
-## Current checkpoint — November 25, 2026
+## Multipart body screening — November 25, 2026
 
 - Completed the multipart body screening increment in the writable Lawrence
   checkout. Clean starting point: `main` at `9b6cb80`, which records the
@@ -41,18 +45,13 @@
 - Gatekeeper now checks extracted HTML for credential and payment phrases
   even when plain text is present. It records one finding per category,
   preferring subject evidence and then plain-text evidence when either matches.
-- Uncommitted changes cover the assessment, terminal report, CLI regression,
-  assessment guide, and this checkpoint. The original checkout at
-  `~/GitHub/Butler` was used as the source for the working copy.
+- The multipart screening change was committed and pushed as `6ccf196`
+  (`Screen both email body formats in Gatekeeper`).
 - On November 25, the original virtual environment's Python ran
   `-m pytest -q -p no:cacheprovider` in the working copy. The baseline passed
   107 tests. The new regression first failed because HTML screening was
   skipped for multipart mail. After implementation, all 108 tests passed.
   `git diff --check` passed. The new case used a synthetic saved email.
-- Proposed next step: evaluate Gatekeeper findings against an approved set
-  of local saved emails before connecting a live inbox. Live inbox access,
-  permission enforcement for mailbox actions, and autonomous routing remain
-  future work.
 
 ## Verified checkpoint — November 14, 2026
 
@@ -438,4 +437,4 @@
   from the same selected database. A second session opened the MissionSquare
   assessment and showed its review note and reopen event. Both exited with
   `quit`. Marking reviewed is covered by the automated session test.
-- Next: review and commit the interactive session changes.
+- Interactive session verification was recorded in `9b6cb80`.
