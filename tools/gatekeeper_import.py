@@ -126,7 +126,8 @@ def import_one(path, args):
         message_digest = domains.pop("message_digest")
         record = assess_email(
             message_id, message, approved_senders=approved_senders,
-            brand_sender_domains=args.brand_sender_domains, **domains
+            brand_sender_domains=args.brand_sender_domains,
+            approved_tracking_links=args.approved_tracking_link, **domains
         )
         add_finding_review_states(record, message_digest, store)
         store.save_review_snapshot(message_digest, path.name, record)
@@ -218,6 +219,11 @@ def main(argv=None):
         "--brand-sender-domain", action="append", nargs=2, default=[],
         metavar=("BRAND", "DOMAIN"), help="Expected exact sender domain for a brand (repeatable)",
     )
+    parser.add_argument(
+        "--approved-tracking-link", action="append", nargs=3, default=[],
+        metavar=("SENDER", "VISIBLE", "TRACKER"),
+        help="Approved exact sender, visible, and tracking domains (repeatable, requires DKIM)",
+    )
     parser.add_argument("--verify-dkim", action="store_true", help="Verify DKIM using DNS")
     parser.add_argument(
         "--format", choices=("json", "text"), help="Assessment output format (default: json)",
@@ -239,6 +245,15 @@ def main(argv=None):
         parser.error("--format requires --assess, --review-queue, --reviewed, or --show-message")
     if args.verify_dkim and not args.assess:
         parser.error("--verify-dkim requires --assess")
+    if args.approved_tracking_link and not (args.assess and args.verify_dkim):
+        parser.error("--approved-tracking-link requires --assess and --verify-dkim")
+    tracking_links = set()
+    for domains in args.approved_tracking_link:
+        combination = tuple(domain.strip().lower() for domain in domains)
+        if not all(DOMAIN_PATTERN.fullmatch(domain) for domain in combination):
+            parser.error("--approved-tracking-link requires three bare DNS domains")
+        tracking_links.add(combination)
+    args.approved_tracking_link = tracking_links
     if args.approved_sender and not args.assess:
         parser.error("--approved-sender requires --assess")
     if args.brand_sender_domain and not args.assess:

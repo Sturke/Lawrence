@@ -40,4 +40,15 @@ Start each development session with [AGENTS.md](AGENTS.md) and the
 See also [Roadmap](docs/roadmap.md), [Architecture](docs/architecture.md),
 and [Architectural Decisions](docs/decisions.md).
 
-Run the full suite from the repository root with `.venv/bin/python -m pytest -q`.
+## Development setup
+
+From this checkout's repository root, use Python 3.11 or newer to create its
+local environment and install the development dependencies:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+For optional live DKIM verification, install `requirements-dkim.txt` in the
+same environment. Run the full suite with `.venv/bin/python -m pytest -q`.

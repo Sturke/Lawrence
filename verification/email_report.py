@@ -115,6 +115,11 @@ def format_email_report(record):
         }[link_check["reason"]]
         link_coverage = f"HTML links skipped ({reason})"
     lines.append(f"Coverage: {reply_coverage}; {link_coverage}.")
+    for tracking_link in link_check.get("approved_tracking_links", []):
+        sender = _terminal_text(tracking_link["authenticated_sender_domain"])
+        displayed = _terminal_text(tracking_link["displayed_domain"])
+        tracker = _terminal_text(tracking_link["destination_domain"])
+        lines.append(f"Approved tracking link: {displayed} → {tracker} (DKIM: {sender}).")
     plain_text_checked = checks["plain_text_body"]["status"] == "checked"
     html_text_checked = checks["html_body_phrases"]["status"] == "checked"
     if plain_text_checked and html_text_checked:

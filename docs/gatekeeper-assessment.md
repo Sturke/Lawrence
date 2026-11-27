@@ -5,7 +5,7 @@ to import one local message and emit a JSON review record to stdout. The existin
 import rules apply. Assessment reads the decoded subject and available plain-text and HTML bodies.
 The `From` and `Date` headers are self-reported. Attachments are outside
 assessment coverage. When an HTML alternative is available, Gatekeeper compares
-domain names shown as link labels with their HTTP or HTTPS destination hostnames.
+hostnames shown as bare domains or full HTTP(S) URLs with their destination hostnames.
 
 ## 1.0 release notes
 
@@ -101,8 +101,9 @@ Matching domains produce no mismatch finding. If either domain is unavailable,
 Gatekeeper skips this check.
 
 For a local `.eml` with an HTML body or alternative,
-Gatekeeper compares links whose entire label is a domain name with their
-HTTP or HTTPS destination hostnames. The comparison ignores case. A mismatch
+Gatekeeper compares a bare domain name or full HTTP(S) URL used as the entire
+link label with the HTTP or HTTPS destination hostname. It compares hostnames
+case-insensitively and ignores differences in scheme, port, path, and query. A mismatch
 produces a low-confidence `link_domain_mismatch` finding with
 `displayed_domain` and `destination_domain` as unverified evidence. The check
 reads the HTML locally without rendering it or opening links.
@@ -207,6 +208,18 @@ full-body RSA-SHA256 signature whose signing domain exactly matches the
 single From mailbox's domain. It reports `unverified` with a reason if that
 evidence is unavailable, and `not_checked` when the flag was omitted.
 Address approval, mailbox identity, and risk disposition are reported separately.
+
+## Approved tracking links
+
+After independently confirming that a sender uses a particular tracking host
+for a visible hostname, supply the three exact domains with
+`--approved-tracking-link SENDER VISIBLE TRACKER`, alongside `--assess`
+and `--verify-dkim`. Repeat the option for multiple combinations.
+
+Gatekeeper applies the exception only when DKIM authenticates the exact From
+domain and both link hostnames match the supplied combination. JSON and text
+reports record the approved tracking link. Other findings still contribute
+to the Review verdict. The exception is configured per run.
 
 ## Readable terminal report
 
@@ -320,14 +333,42 @@ saved assessment as JSON.
 
 ## Interactive review session
 
-Start a session with the same database you used to assess your emails:
+From the Lawrence repository root, start a session with the default Gatekeeper
+database:
 
 ```bash
-.venv/bin/python -m tools.gatekeeper_review --database "$queue_db"
+.venv/bin/python -m tools.gatekeeper_review
 ```
+
+If you assessed emails with a custom database, add `--database` and the path
+to that same SQLite file. Use `--database "$queue_db"` only after setting
+`queue_db` in the current terminal to that path. Each checkout needs its own
+[virtual environment](../README.md#development-setup).
 
 At the `gatekeeper>` prompt, enter `queue` to list pending messages.
 Use `show MESSAGE_ID` to inspect one, `done MESSAGE_ID "optional note"`
 to mark its pending findings reviewed, and `history MESSAGE_ID` to see
 its review events. Use `reviewed` for the reviewed view, `help` for
 the command list, or `quit` to return to Warp.
+
+## Manual quarantine for saved emails
+
+Use the quarantine command to move an individual saved `.eml` file into a
+separate local folder. Review findings are advisory and never move files.
+The quarantine command handles the export only and does not connect to the
+mail account or render the message.
+
+From the repository root, use the Python environment you use for Gatekeeper:
+
+```bash
+python3 -m tools.gatekeeper_quarantine move "/path/to/saved/Example.eml"
+python3 -m tools.gatekeeper_quarantine list
+python3 -m tools.gatekeeper_quarantine restore "Example.eml" "/path/to/saved"
+```
+
+The default folder is `~/Library/Application Support/Butler/quarantine`.
+To select another folder on the same filesystem as your exports, add
+`--directory "/path/to/quarantine"` before the subcommand and use the same
+folder for move, list, and restore. Restore takes an existing destination
+folder. A filename collision stops the operation and preserves both files.
+The saved assessment and its review history stay in the Gatekeeper database.

@@ -70,6 +70,19 @@ DOMAIN_PATTERN = re.compile(
 )
 
 
+def displayed_link_hostname(label):
+    if DOMAIN_PATTERN.fullmatch(label):
+        return label.lower()
+
+    if not label.lower().startswith(("http://", "https://")) or " " in label or "\\" in label:
+        return None
+
+    try:
+        return urlsplit(label).hostname
+    except ValueError:
+        return None
+
+
 class LinkDomainParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -113,8 +126,8 @@ class LinkDomainParser(HTMLParser):
             and destination.path.lower().endswith((".htm", ".html"))
         ):
             self.cloud_page_links.append(label)
-        displayed_domain = label.lower()
-        if DOMAIN_PATTERN.fullmatch(displayed_domain):
+        displayed_domain = displayed_link_hostname(label)
+        if displayed_domain:
             self.links_compared += 1
             if destination_domain != displayed_domain:
                 self.mismatches.append((displayed_domain, destination_domain))
@@ -177,7 +190,7 @@ def brand_sender_findings(subject, from_domain, brand_sender_domains):
 def assess_email(
     message_id, message, *, from_domain=None, reply_to_domain=None, html_body=None,
     claimed_address=None, approved_senders=(), sender_domain_authentication=None,
-    plain_text_available=True, brand_sender_domains=None,
+    plain_text_available=True, brand_sender_domains=None, approved_tracking_links=(),
 ):
     """Return a JSON-ready assessment without external verification."""
     findings = []
@@ -246,7 +259,21 @@ def assess_email(
         html_check = {"status": "compared", "links_compared": parser.links_compared}
         if not parser.links_compared:
             html_check.update(status="skipped", reason="no_eligible_links")
+        authentication = sender_domain_authentication or {}
+        authenticated_sender = (
+            from_domain if authentication.get("status") == "authenticated"
+            and authentication.get("signing_domain") == from_domain else None
+        )
         for displayed_domain, destination_domain in parser.mismatches:
+            if authenticated_sender and (
+                authenticated_sender, displayed_domain, destination_domain
+            ) in approved_tracking_links:
+                html_check.setdefault("approved_tracking_links", []).append({
+                    "authenticated_sender_domain": authenticated_sender,
+                    "displayed_domain": displayed_domain,
+                    "destination_domain": destination_domain,
+                })
+                continue
             findings.append({
                 "category": "link_domain_mismatch",
                 "confidence": "low",
@@ -371,7 +398,7 @@ def assess_email(
             "Phrase matching can miss risks or match benign text.",
             "HTML body phrases use extracted text without evaluating CSS or rendering.",
             "The assessment checks phrases in the subject and available bodies, and compares available From and Reply-To domains.",
-            "The HTML link check compares domain-only labels with HTTP or HTTPS destination hostnames without opening links.",
+            "The HTML link check compares hostnames in domain and full URL labels with HTTP or HTTPS destination hostnames without opening links.",
             "Sender identity and message claims were not verified.",
         ],
     }

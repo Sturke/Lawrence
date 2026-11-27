@@ -1,6 +1,70 @@
 # Current Project Status
 
-## Current checkpoint — November 26, 2026
+## Manual saved-email quarantine
+
+- Added a local command to move one explicitly selected saved email into
+  quarantine, list quarantined filenames, and restore a file to an existing
+  folder. Review findings stay advisory. Mailbox access and automatic routing
+  remain future work.
+- Move and restore preserve the original bytes, refuse filename collisions
+  and symlink inputs, and require a common filesystem. The original file
+  remains in place if the destination cannot be created.
+- Lawrence now has its own local virtual environment. The full suite passed
+  115 tests with `.venv/bin/python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed. Quarantine verification used synthetic local files,
+  and the interactive review session opened from the Lawrence checkout.
+
+## Authenticated tracking-link exceptions
+
+- Added an opt-in exception for a sender domain, visible hostname, and tracking
+  hostname supplied together. It requires exact From-domain DKIM authentication.
+  Successful exceptions remain visible in JSON and text, and other findings
+  still count toward Review.
+- The CLI regression initially failed because the option was unavailable.
+  Simulated cases cover the approved combination, different tracking and visible
+  hosts, failed or mismatched authentication, and a separate credential finding.
+  The full suite passed 113 tests using the original checkout's virtual
+  environment with `python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed.
+- Gatekeeper verified live DKIM for the saved Holiday Happenings newsletter
+  and authenticated `cuhumane.org`. The exact sender and tracking-host
+  combination remains unapproved, so the link mismatch still triggers Review.
+
+## Visible URL hostname comparison
+
+- Extended the saved-email link check to compare a bare domain or a full
+  HTTP(S) URL label with the destination hostname. The new test first failed
+  because full URLs were skipped. It now covers different hostnames, the same
+  hostname with different URL components, and malformed or prose labels.
+- The full suite passed 112 tests using the original checkout's virtual
+  environment with `python -m pytest -q -p no:cacheprovider`.
+  `git diff --check` passed.
+- The offline rerun imported all 19 labeled messages and sent 4 of 9 suspicious
+  emails and 2 of 10 legitimate emails to Review. The newly flagged samples
+  were the Compass Mining verification email and the legitimate Holiday
+  Happenings newsletter. No links were opened.
+- The authenticated tracking-link exception above provides an opt-in way to
+  reduce this false positive after confirming the exact tracking host.
+
+## Action-link coverage investigation — November 26, 2026
+
+- Started from clean `main` at `6063523`. The labeled validation batch
+  sent 3 of 9 suspicious messages and 1 of 10 legitimate messages to Review.
+- Four of the six misses contained web action links. Three used cloud-hosted
+  HTML pages. One had a verification button and a displayed full URL whose
+  actual destination was a different host. The two invoice and ledger
+  samples had no HTTP(S) action link in their parsed bodies.
+- Added one saved-email CLI characterization test with six fictional cases
+  and a domain-only label as a positive control. The test documents current
+  coverage. It adds no detection rules. The full suite passed 112 tests
+  with the original checkout’s virtual environment using
+  `python -m pytest -q -p no:cacheprovider`. `git diff --check` passed.
+- The test and this status update are uncommitted. Proposed next step:
+  compare the hostname in visible HTTP(S) URL labels with the actual
+  destination, using matched and mismatched pairs plus legitimate tracking
+  examples. No links were opened.
+
+## Prior checkpoint — November 26, 2026
 
 - Local `main` includes `609b179` (`Add Gatekeeper brand and action-link
   screening`), one commit ahead of `origin/main` as of November 26.

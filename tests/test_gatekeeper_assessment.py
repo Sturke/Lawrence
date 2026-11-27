@@ -867,3 +867,100 @@ def test_brand_sender_check_distinguishes_sensitive_requests(tmp_path, capsys):
 
     main(args[:4])
     assert json.loads(capsys.readouterr().out)["findings"] == []
+
+
+def test_saved_email_action_link_coverage(tmp_path, capsys):
+    """Exercise bare domains and full URLs alongside ordinary action labels."""
+    from email.message import EmailMessage
+
+    cloud_page = "https://storage.googleapis.com/example/action.html"
+    cases = [
+        ("Warranty offer", "Get my free quote →", cloud_page, 0, None),
+        ("Account blocked: renew your subscription", "Update my payment details", cloud_page, 0, None),
+        ("Storage full", "Cloud Services: Payment failed. Renew now.", cloud_page, 0, None),
+        (
+            "Verify your email", "https://identity.example.net/verify",
+            "http://tracking.example.com/verify", 1, ("identity.example.net", "tracking.example.com"),
+        ),
+        (
+            "Verify your email", "https://IDENTITY.example.net:443/verify?a=1",
+            "https://identity.example.net/continue", 1, None,
+        ),
+        (
+            "Verify your email", "Visit https://identity.example.net/verify",
+            "https://tracking.example.com/verify", 0, None,
+        ),
+        (
+            "Verify your email", "https://[malformed.example/verify",
+            "https://tracking.example.com/verify", 0, None,
+        ),
+        ("Invoice status", None, None, 0, None),
+        ("Account ledger", None, None, 0, None),
+        (
+            "Verify your email", "identity.example.net",
+            "http://tracking.example.com/verify", 1, ("identity.example.net", "tracking.example.com"),
+        ),
+    ]
+    database = tmp_path / "action-link-coverage.sqlite3"
+    for index, (subject, label, destination, compared, mismatch) in enumerate(cases):
+        message = EmailMessage()
+        message["From"] = "notices@example.com"
+        message["Date"] = "Thu, 26 Nov 2026 10:00:00 -0600"
+        message["Subject"] = subject
+        html = f'<a href="{destination}">{label}</a>' if label else "<p>Please review the notice.</p>"
+        message.set_content(html, subtype="html")
+        source = tmp_path / f"notice-{index}.eml"
+        source.write_bytes(message.as_bytes())
+
+        main([str(source), "--assess", "--database", str(database)])
+        record = json.loads(capsys.readouterr().out)
+        assert record["checks"]["html_link_domains"]["links_compared"] == compared, subject
+        if mismatch:
+            (finding,) = record["findings"]
+            assert finding["category"] == "link_domain_mismatch"
+            evidence = finding["evidence"]
+            assert (evidence["displayed_domain"], evidence["destination_domain"]) == mismatch
+            assert record["disposition"] == "review_required"
+        else:
+            assert record["findings"] == [], subject
+            assert record["disposition"] == "inconclusive"
+
+
+def test_tracking_link_exception_requires_exact_authenticated_combination(tmp_path, capsys, monkeypatch):
+    source = tmp_path / "newsletter.eml"
+    database = tmp_path / "newsletter.sqlite3"
+    args = [
+        str(source), "--assess", "--database", str(database), "--verify-dkim",
+        "--approved-tracking-link", "example.org", "www.example.org", "trk.mailer.example",
+    ]
+    cases = [
+        ("www.example.org", "trk.mailer.example", "authenticated", "example.org", "", []),
+        ("www.example.org", "trk.other.example", "authenticated", "example.org", "", ["link_domain_mismatch"]),
+        ("identity.other.example", "trk.mailer.example", "authenticated", "example.org", "", ["link_domain_mismatch"]),
+        ("www.example.org", "trk.mailer.example", "unverified", None, "", ["link_domain_mismatch"]),
+        ("www.example.org", "trk.mailer.example", "authenticated", "other.example", "", ["link_domain_mismatch"]),
+        ("www.example.org", "trk.mailer.example", "authenticated", "example.org", "Enter your password.", ["credential_request"]),
+    ]
+    for visible, target, status, signing_domain, body, expected in cases:
+        monkeypatch.setattr(
+            "tools.gatekeeper_import.authenticate_from_domain",
+            lambda *_: {"status": status, "signing_domain": signing_domain},
+        )
+        source.write_text(
+            "From: News <news@example.org>\n"
+            "Date: Thu, 26 Nov 2026 10:00:00 -0600\n"
+            "Subject: Holiday newsletter\n"
+            "Content-Type: text/html; charset=utf-8\n\n"
+            f'<p>{body}</p><a href="https://{target}/click">https://{visible}/news</a>',
+            encoding="utf-8",
+        )
+        main(args)
+        record = json.loads(capsys.readouterr().out)
+        assert [finding["category"] for finding in record["findings"]] == expected
+        assert record["disposition"] == ("review_required" if expected else "inconclusive")
+        exceptions = record["checks"]["html_link_domains"].get("approved_tracking_links", [])
+        assert exceptions == ([] if "link_domain_mismatch" in expected else [{
+            "authenticated_sender_domain": "example.org",
+            "displayed_domain": visible,
+            "destination_domain": target,
+        }])
