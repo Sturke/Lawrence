@@ -40,6 +40,31 @@ decision for the reviewed pull request head. When Burke's account authors
 the pull request, record the approval in chat or as a PR comment. GitHub's
 formal review approval requires a different account from the PR author.
 
+## Pull request review checklist
+
+1. **Read the summary.** Open the PR link from the handoff. On GitHub's
+   **Conversation** tab, check that the base is `main`, the work matches
+   what you asked for, and the summary explains the remaining limitations.
+2. **Review the changes.** Open **Files changed**. Start with the decision,
+   user-facing docs, or tests that describe the behavior you asked for.
+   Look for unexpected changes to scope, personal data access, permissions,
+   or automatic actions. Ask in chat or comment on the file if anything
+   needs explanation or revision.
+3. **Check the results.** Open **Checks** and confirm **Python tests** passed
+   for the latest commit. If checks are pending or failing, Codex will report
+   the result and address any failure within scope before handing it back.
+4. **Decide whether to merge.** If changes are needed, tell Codex what to revise
+   and review the updated PR after CI reruns. If the PR is ready, either merge
+   it yourself on GitHub or explicitly authorize Codex. For example, write
+   “I reviewed PR #N at commit SHA and authorize you to merge it into main.”
+   When your account authored the PR, use chat or a **Conversation** comment
+   to record approval. If the reviewed changes are revised, review and approve
+   the new version before merging.
+5. **Confirm the new baseline.** After merging, Codex verifies GitHub's
+   `main` and updates the Lawrence checkout with a fast-forward. The original
+   Butler checkout can be updated when needed. Start the next feature from
+   the new approved baseline.
+
 ## Evidence and assumptions
 
 Separate observed facts (file/commit references and actual check results), historical

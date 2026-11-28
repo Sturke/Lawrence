@@ -11,7 +11,9 @@
   updates agent and accountability instructions, and adds GitHub Actions CI.
   GitHub initially reported that `main` was unprotected. The pull request is
   the record for the hosted test result and verified protection settings.
-- Next: Burke reviews and explicitly authorizes a merge when ready.
+- PR #1 is open. The [review checklist](accountability.md#pull-request-review-checklist)
+  explains how to inspect the changes, confirm CI, and record merge approval.
+  Burke reviews the updated PR and decides whether to merge.
 
 ## Manual saved-email quarantine
 
