@@ -18,6 +18,53 @@ authorization for that objective; ask only when an unresolved ambiguity or scope
 change actually needs Burke's decision. Baseline tests are useful when establishing
 status or investigating behavior; do not run them mechanically for every discussion.
 
+## Branches and approval
+
+Follow [Decision 007](decisions.md#decision-007--controlled-ai-assisted-development-workflow).
+Retain both checkouts. Use the ChatGPT checkout for feature branch work
+and verify its base against GitHub's `main` before starting. Burke delegates
+implementation, testing, documentation, feature-branch commits and pushes,
+and pull request preparation within the agreed scope.
+
+Before pushing, inspect every changed and staged file, including additions.
+Keep real emails, personal data, credentials, and local databases outside
+version control. Use synthetic fixtures and keep CI independent of personal
+accounts and sample collections.
+
+Open a pull request against `main`, with scope, verification, and known
+limitations in its description. `main` requires a pull request and the
+GitHub Actions **Python tests** check. Disable force pushes and deletion,
+and apply protection to administrators. Record the controls actually
+verified on GitHub. Burke's explicit approval to merge is a separate
+decision for the reviewed pull request head. When Burke's account authors
+the pull request, record the approval in chat or as a PR comment. GitHub's
+formal review approval requires a different account from the PR author.
+
+## Pull request review checklist
+
+1. **Read the summary.** Open the PR link from the handoff. On GitHub's
+   **Conversation** tab, check that the base is `main`, the work matches
+   what you asked for, and the summary explains the remaining limitations.
+2. **Review the changes.** Open **Files changed**. Start with the decision,
+   user-facing docs, or tests that describe the behavior you asked for.
+   Look for unexpected changes to scope, personal data access, permissions,
+   or automatic actions. Ask in chat or comment on the file if anything
+   needs explanation or revision.
+3. **Check the results.** Open **Checks** and confirm **Python tests** passed
+   for the latest commit. If checks are pending or failing, Codex will report
+   the result and address any failure within scope before handing it back.
+4. **Decide whether to merge.** If changes are needed, tell Codex what to revise
+   and review the updated PR after CI reruns. If the PR is ready, either merge
+   it yourself on GitHub or explicitly authorize Codex. For example, write
+   “I reviewed PR #N at commit SHA and authorize you to merge it into main.”
+   When your account authored the PR, use chat or a **Conversation** comment
+   to record approval. If the reviewed changes are revised, review and approve
+   the new version before merging.
+5. **Confirm the new baseline.** After merging, Codex verifies GitHub's
+   `main` and updates the Lawrence checkout with a fast-forward. The original
+   Butler checkout can be updated when needed. Start the next feature from
+   the new approved baseline.
+
 ## Evidence and assumptions
 
 Separate observed facts (file/commit references and actual check results), historical
@@ -64,7 +111,9 @@ single current checkpoint in [project_status.md](project_status.md) with:
 Keep historical detail in Git rather than appending a transcript. Update milestone
 checkboxes only when the completion condition is met. Add decisions only when an
 architectural choice has been accepted. Show the diff and summarize the outcome to
-Burke. Commit and push require explicit approval; completion of editing is not approval.
+Burke. Report the feature branch, commit or pull request link, CI status,
+and any unverified protection settings. Leave the pull request open for
+Burke's merge decision.
 
 ## Limits of conversational memory
 

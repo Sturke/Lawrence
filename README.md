@@ -36,7 +36,8 @@ current test results, remaining work, and session handoff. Bounded Improved
 Retrieval v1B is complete; see the roadmap for supported behavior and limits.
 
 Start each development session with [AGENTS.md](AGENTS.md) and the
-[Project Accountability Protocol](docs/accountability.md).
+[Project Accountability Protocol](docs/accountability.md). When a change is
+ready, follow the [pull request review checklist](docs/accountability.md#pull-request-review-checklist).
 See also [Roadmap](docs/roadmap.md), [Architecture](docs/architecture.md),
 and [Architectural Decisions](docs/decisions.md).
 

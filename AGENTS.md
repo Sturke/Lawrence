@@ -23,5 +23,11 @@ choice, not routine session notes.
 Run checks appropriate to the change. The full regression command is
 `.venv/bin/python -m pytest -q` from the repository root. Record the actual result,
 including failures or checks not run. Never reuse an old test count as verification.
-Review and show the final diff (including new files), update project_status.md,
-and report remaining work. Do not commit or push without explicit user approval.
+Follow [Decision 007](docs/decisions.md#decision-007--controlled-ai-assisted-development-workflow).
+Use a dedicated feature branch in the ChatGPT checkout for AI-assisted work.
+Review the complete diff, update project_status.md, and run local checks
+before committing and pushing to the feature branch. Prepare a pull request
+against the stable `main` branch and report its check results. Burke must
+explicitly authorize merging that pull request. Keep personal data, credentials,
+local databases, and email collections outside version control. Use synthetic
+fixtures for repository tests.
