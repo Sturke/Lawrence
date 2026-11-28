@@ -116,3 +116,22 @@ priority. Improved Retrieval v1B remains the current
 development milestone.
 
 **Architecture Reference:** `docs/architecture.md`
+
+## Decision 007 — Controlled AI-Assisted Development Workflow
+
+**Approved by Burke on November 27, 2026.**
+
+- GitHub's `Sturke/Lawrence` repository hosts the stable, approved `main`
+  branch. Retain the original checkout at `~/GitHub/Butler` and the ChatGPT
+  checkout at `~/Documents/ChatGPT/Butler/lawrence`.
+- Start AI-assisted changes on a dedicated feature branch from verified
+  `main`. Burke delegates implementation, testing, documentation, commits,
+  pushes to the feature branch, and pull request preparation to ChatGPT.
+- Integrate changes through a pull request with passing required checks.
+  Merging into `main` requires Burke's explicit authorization for that pull
+  request. Any new substantive change after authorization requires renewed approval.
+- Keep personal data, credentials, local databases, and email test
+  collections outside version control. Use synthetic data for CI fixtures.
+
+See the [Project Accountability Protocol](accountability.md) for local
+verification, GitHub controls, and the review handoff.

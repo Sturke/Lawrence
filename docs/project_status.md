@@ -1,5 +1,18 @@
 # Current Project Status
 
+## Controlled development workflow — November 27, 2026
+
+- Burke approved [Decision 007](decisions.md#decision-007--controlled-ai-assisted-development-workflow).
+  Both checkouts were clean on `main` at `cdce619`; GitHub's `main` matched.
+  Burke independently reported 115 tests passed in 0.42 seconds on Python 3.14.7.
+- This session reproduced the baseline locally on Python 3.14.7 with
+  `.venv/bin/python -m pytest -q -p no:cacheprovider`: 115 passed.
+- The `docs/controlled-development-workflow` branch records the decision,
+  updates agent and accountability instructions, and adds GitHub Actions CI.
+  GitHub initially reported that `main` was unprotected. The pull request is
+  the record for the hosted test result and verified protection settings.
+- Next: Burke reviews and explicitly authorizes a merge when ready.
+
 ## Manual saved-email quarantine
 
 - Added a local command to move one explicitly selected saved email into
